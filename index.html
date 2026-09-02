@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real Insight</title>
+  <meta name="description" content="Real Insight">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="nav-container">
+    <a href="/" class="logo">Real Insight<span class="logo-dot"></span></a>
+    <nav class="nav-links" id="navLinks">
+      <a href="/" class="active">Home</a>
+      <a href="/categories">Categories</a>
+      <a href="/add-post">Add New Post</a>
+    </nav>
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <section class="home-container">
+    <div class="page-intro">
+      <h1>Real Insight</h1>
+      <p>Ideas, information and perspectives that matter.</p>
+    </div>
+
+    <div class="content-layout">
+      <section class="posts-section">
+        <div class="section-heading"><h2>Latest Posts</h2></div>
+        <div class="post-list" id="postList"></div>
+        <div class="empty-state" id="emptyState" hidden>No posts have been published yet.</div>
+      </section>
+
+      <aside class="sidebar">
+        <div class="widget">
+          <h3 class="widget-title">Recent Posts</h3>
+          <ul class="recent-list" id="recentPosts"></ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; <span id="currentYear"></span> <strong>Real Insight</strong>. All rights reserved.</p>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>
