@@ -160,7 +160,9 @@ async function githubRequest(
    ========================================= */
 
 function slugify(
-  value
+  value,
+  maxWords = 8,
+  maxCharacters = 70
 ) {
 
   let slug =
@@ -175,7 +177,7 @@ function slugify(
 
 
   /*
-   * Convert ampersands to "and"
+   * Convert ampersands to "and".
    */
 
   slug =
@@ -186,7 +188,7 @@ function slugify(
 
 
   /*
-   * Remove apostrophes
+   * Remove apostrophes.
    */
 
   slug =
@@ -220,15 +222,61 @@ function slugify(
 
 
   /*
-   * Keep URLs reasonably short.
+   * Limit the slug to a maximum
+   * number of words.
    */
 
-  slug =
-    slug.slice(
-      0,
-      100
-    );
+  const words =
+    slug
+      .split("-")
+      .filter(Boolean)
+      .slice(
+        0,
+        maxWords
+      );
 
+
+  /*
+   * Rebuild the slug while also
+   * enforcing the character limit.
+   *
+   * This prevents one unusually long
+   * word from making the URL too long.
+   */
+
+  slug = "";
+
+  for (
+    const word of words
+  ) {
+
+    const nextSlug =
+      slug
+        ? `${slug}-${word}`
+        : word;
+
+
+    if (
+      nextSlug.length >
+      maxCharacters
+    ) {
+
+      break;
+
+    }
+
+
+    slug =
+      nextSlug;
+
+  }
+
+
+  /*
+   * Remove trailing hyphens just
+   * in case the character limit
+   * stopped partway through.
+   */
 
   slug =
     slug.replace(
