@@ -1,21 +1,20 @@
 /*
- * Real Insight
+ * Real Insight Post Publisher
  *
- * Netlify Function:
- * Browser → Netlify → GitHub
+ * Browser
+ *   ↓
+ * Netlify Function
+ *   ↓
+ * GitHub repository
  *
- * This function:
- * 1. Verifies the publishing access code.
- * 2. Generates the final slug.
- * 3. Sanitizes the article HTML.
- * 4. Gets post.html from GitHub.
- * 5. Creates /posts/slug.html.
- * 6. Commits it to GitHub.
- * 7. Netlify automatically rebuilds the site.
+ * The GitHub token and admin access code
+ * are NEVER exposed to the browser.
  */
 
-const GITHUB_API =
-  "https://api.github.com";
+const fs = require("fs");
+const path = require("path");
+
+const GITHUB_API = "https://api.github.com";
 
 const OWNER =
   process.env.GITHUB_OWNER || "purevoice";
@@ -30,7 +29,7 @@ const GITHUB_TOKEN =
   process.env.GITHUB_TOKEN;
 
 const ACCESS_CODE =
-  process.env.POST_ACCESS_CODE;
+  process.env.ADMIN_ACCESS_CODE;
 
 
 /* =========================================
@@ -39,27 +38,26 @@ const ACCESS_CODE =
 
 function response(
   statusCode,
-  data
+  body
 ) {
 
   return {
+
     statusCode,
 
     headers: {
-      "Content-Type":
-        "application/json; charset=utf-8",
-
+      "Content-Type": "application/json",
       "Access-Control-Allow-Origin":
         "https://realinsight.netlify.app",
-
       "Access-Control-Allow-Headers":
         "Content-Type",
-
       "Access-Control-Allow-Methods":
         "POST, OPTIONS"
     },
 
-    body: JSON.stringify(data)
+    body:
+      JSON.stringify(body)
+
   };
 
 }
@@ -70,46 +68,45 @@ function response(
    ========================================= */
 
 async function githubRequest(
-  endpoint,
+  url,
   options = {}
 ) {
 
   if (!GITHUB_TOKEN) {
+
     throw new Error(
       "GITHUB_TOKEN is not configured."
     );
+
   }
 
 
-  const requestOptions = {
+  const headers = {
 
-    ...options,
+    "Accept":
+      "application/vnd.github+json",
 
-    headers: {
+    "Authorization":
+      `Bearer ${GITHUB_TOKEN}`,
 
-      Accept:
-        "application/vnd.github+json",
+    "X-GitHub-Api-Version":
+      "2022-11-28",
 
-      Authorization:
-        `Bearer ${GITHUB_TOKEN}`,
+    "User-Agent":
+      "Real-Insight-Netlify",
 
-      "X-GitHub-Api-Version":
-        "2022-11-28",
-
-      "User-Agent":
-        "Real-Insight-Netlify",
-
-      ...(options.headers || {})
-
-    }
+    ...(options.headers || {})
 
   };
 
 
   const result =
     await fetch(
-      `${GITHUB_API}${endpoint}`,
-      requestOptions
+      url,
+      {
+        ...options,
+        headers
+      }
     );
 
 
@@ -129,28 +126,26 @@ async function githubRequest(
 
   } catch {
 
-    data = {
-      message: text
-    };
+    data = text;
 
   }
 
 
   if (!result.ok) {
 
-    const error =
-      new Error(
-        data?.message ||
-        `GitHub request failed (${result.status}).`
-      );
+    const message =
+      data &&
+      typeof data === "object" &&
+      data.message
 
-    error.status =
-      result.status;
+        ? data.message
 
-    error.githubData =
-      data;
+        : `GitHub request failed with status ${result.status}.`;
 
-    throw error;
+
+    throw new Error(
+      message
+    );
 
   }
 
@@ -161,45 +156,91 @@ async function githubRequest(
 
 
 /* =========================================
-   SLUG GENERATOR
+   SLUGIFY
    ========================================= */
 
-function slugify(title) {
+function slugify(
+  value
+) {
 
   let slug =
-    String(title || "")
+    String(value || "")
       .normalize("NFKD")
       .replace(
         /[\u0300-\u036f]/g,
         ""
       )
       .toLowerCase()
-      .trim()
-      .replace(
-        /&/g,
-        " and "
-      )
-      .replace(
-        /[^a-z0-9\s-]/g,
-        ""
-      )
-      .replace(
-        /\s+/g,
-        "-"
-      )
-      .replace(
-        /-+/g,
-        "-"
-      )
-      .replace(
-        /^-|-$/g,
-        ""
-      )
-      .slice(
-        0,
-        100
-      );
+      .trim();
 
+
+  /*
+   * Convert ampersands to "and"
+   */
+
+  slug =
+    slug.replace(
+      /&/g,
+      " and "
+    );
+
+
+  /*
+   * Remove apostrophes
+   */
+
+  slug =
+    slug.replace(
+      /['’]/g,
+      ""
+    );
+
+
+  /*
+   * Convert anything that isn't
+   * a letter or number into a hyphen.
+   */
+
+  slug =
+    slug.replace(
+      /[^a-z0-9]+/g,
+      "-"
+    );
+
+
+  /*
+   * Remove leading/trailing hyphens.
+   */
+
+  slug =
+    slug.replace(
+      /^-+|-+$/g,
+      ""
+    );
+
+
+  /*
+   * Keep URLs reasonably short.
+   */
+
+  slug =
+    slug.slice(
+      0,
+      100
+    );
+
+
+  slug =
+    slug.replace(
+      /-+$/g,
+      ""
+    );
+
+
+  /*
+   * Fallback if the title somehow
+   * produces an empty slug.
+   */
 
   if (!slug) {
 
@@ -215,10 +256,12 @@ function slugify(title) {
 
 
 /* =========================================
-   HTML ESCAPING
+   ESCAPE HTML
    ========================================= */
 
-function escapeHtml(value) {
+function escapeHtml(
+  value
+) {
 
   return String(value || "")
     .replace(
@@ -246,23 +289,24 @@ function escapeHtml(value) {
 
 
 /* =========================================
-   SANITIZE POST HTML
+   SANITIZE EDITOR HTML
    ========================================= */
 
-function sanitizeHtml(html) {
+function sanitizeHtml(
+  html
+) {
 
   let clean =
     String(html || "");
 
 
   /*
-   * Remove dangerous elements
-   * and their contents.
+   * Remove dangerous elements.
    */
 
   clean =
     clean.replace(
-      /<(script|style|iframe|object|embed|form|input|button|textarea|select|option|meta|link|base|svg|canvas|video|audio)[^>]*>[\s\S]*?<\/\1>/gi,
+      /<\s*(script|iframe|object|embed|style|form|input|button|textarea|select|meta|link|base)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi,
       ""
     );
 
@@ -273,13 +317,18 @@ function sanitizeHtml(html) {
 
   clean =
     clean.replace(
-      /<(script|style|iframe|object|embed|form|input|button|textarea|select|option|meta|link|base|svg|canvas|video|audio)[^>]*\/?>/gi,
+      /<\s*(script|iframe|object|embed|style|form|input|button|textarea|select|meta|link|base)[^>]*\/?\s*>/gi,
       ""
     );
 
 
   /*
-   * Remove inline JavaScript event handlers.
+   * Remove inline event handlers.
+   *
+   * Examples:
+   * onclick=""
+   * onmouseover=""
+   * onload=""
    */
 
   clean =
@@ -295,31 +344,73 @@ function sanitizeHtml(html) {
 
   clean =
     clean.replace(
-      /(href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\2/gi,
+      /\s+(href|src|action|formaction)\s*=\s*(?:"[^"]*javascript:[^"]*"|'[^']*javascript:[^']*'|[^\s>]*javascript:[^\s>]*)/gi,
       ""
     );
 
 
   /*
-   * Remove data URLs from links.
+   * Remove data: URLs from attributes.
    */
 
   clean =
     clean.replace(
-      /href\s*=\s*(["'])\s*data:[\s\S]*?\1/gi,
+      /\s+(href|src|action|formaction)\s*=\s*(?:"[^"]*data:[^"]*"|'[^']*data:[^']*'|[^\s>]*data:[^\s>]*)/gi,
       ""
     );
 
 
   /*
-   * Remove dangerous protocol values
-   * that may have been pasted into HTML.
+   * Remove contenteditable attributes
+   * from published content.
    */
 
   clean =
     clean.replace(
-      /\s+(href|src)\s*=\s*(["'])\s*(vbscript|javascript):[\s\S]*?\2/gi,
+      /\s+contenteditable\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
       ""
+    );
+
+
+  /*
+   * Add safe attributes to normal links.
+   */
+
+  clean =
+    clean.replace(
+      /<a\b([^>]*)>/gi,
+      function(match, attributes) {
+
+        let result =
+          attributes;
+
+
+        /*
+         * Remove existing target/rel so
+         * we can add our controlled values.
+         */
+
+        result =
+          result.replace(
+            /\s+target\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
+            ""
+          );
+
+
+        result =
+          result.replace(
+            /\s+rel\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
+            ""
+          );
+
+
+        return (
+          `<a${result}` +
+          ` target="_blank"` +
+          ` rel="noopener noreferrer">`
+        );
+
+      }
     );
 
 
@@ -329,7 +420,7 @@ function sanitizeHtml(html) {
 
 
 /* =========================================
-   READING TIME
+   CALCULATE READING TIME
    ========================================= */
 
 function calculateReadingTime(
@@ -349,9 +440,9 @@ function calculateReadingTime(
       .trim();
 
 
-  const words =
+  const wordCount =
     text
-      ? text.split(" ").length
+      ? text.split(/\s+/).length
       : 0;
 
 
@@ -359,7 +450,7 @@ function calculateReadingTime(
     Math.max(
       1,
       Math.ceil(
-        words / 200
+        wordCount / 200
       )
     );
 
@@ -370,7 +461,7 @@ function calculateReadingTime(
 
 
 /* =========================================
-   LAGOS DATE
+   PUBLISH DATE
    ========================================= */
 
 function getPublishDate() {
@@ -398,7 +489,7 @@ function getPublishDate() {
 
 
 /* =========================================
-   POST DATA SCRIPT
+   CREATE POST DATA SCRIPT
    ========================================= */
 
 function createPostDataScript(
@@ -426,30 +517,27 @@ function createPostDataScript(
       post.excerpt,
 
     tags:
-      post.tags
+      post.tags || []
 
   };
 
 
-  /*
-   * Escape characters that could
-   * accidentally terminate the script tag.
-   */
-
   const json =
-    JSON.stringify(data)
-      .replace(
-        /</g,
-        "\\u003c"
-      )
-      .replace(
-        />/g,
-        "\\u003e"
-      )
-      .replace(
-        /&/g,
-        "\\u0026"
-      );
+    JSON.stringify(
+      data
+    )
+    .replace(
+      /</g,
+      "\\u003c"
+    )
+    .replace(
+      />/g,
+      "\\u003e"
+    )
+    .replace(
+      /&/g,
+      "\\u0026"
+    );
 
 
   return `
@@ -470,22 +558,20 @@ function createSourcePost(
   post
 ) {
 
-  const canonical =
-    `https://realinsight.netlify.app/${post.slug}`;
-
-
-  const postDataScript =
-    createPostDataScript(
-      post
+  const siteUrl =
+    (
+      process.env.NETLIFY_SITE_URL ||
+      process.env.URL ||
+      "https://realinsight.netlify.app"
+    )
+    .replace(
+      /\/+$/,
+      ""
     );
 
 
-  const content =
-    `
-<!-- REAL_INSIGHT_CONTENT_START -->
-${post.content}
-<!-- REAL_INSIGHT_CONTENT_END -->
-`;
+  const canonical =
+    `${siteUrl}/${post.slug}`;
 
 
   let html =
@@ -495,7 +581,9 @@ ${post.content}
   html =
     html.replaceAll(
       "{{POST_DATA}}",
-      postDataScript
+      createPostDataScript(
+        post
+      )
     );
 
 
@@ -520,7 +608,9 @@ ${post.content}
   html =
     html.replaceAll(
       "{{CANONICAL}}",
-      canonical
+      escapeHtml(
+        canonical
+      )
     );
 
 
@@ -551,16 +641,31 @@ ${post.content}
     );
 
 
+  /*
+   * This is the important part.
+   *
+   * build.js uses these markers to
+   * recover the original article content.
+   */
+
   html =
     html.replaceAll(
       "{{CONTENT}}",
-      content
+      `<!-- REAL_INSIGHT_CONTENT_START -->
+${post.content}
+<!-- REAL_INSIGHT_CONTENT_END -->`
     );
 
 
   /*
-   * These sections are populated later
-   * by build.js.
+   * These are deliberately left empty.
+   *
+   * build.js generates:
+   *
+   * - tags
+   * - related posts
+   * - recent posts
+   * - previous/next navigation
    */
 
   html =
@@ -604,19 +709,36 @@ async function getGithubFile(
   filePath
 ) {
 
+  const url =
+    `${GITHUB_API}/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(filePath)}?ref=${encodeURIComponent(BRANCH)}`;
+
+
   try {
 
     return await githubRequest(
-      `/repos/${encodeURIComponent(OWNER)}/${encodeURIComponent(REPO)}/contents/${filePath}?ref=${encodeURIComponent(BRANCH)}`
+      url,
+      {
+        method: "GET"
+      }
     );
 
   } catch (error) {
 
+    /*
+     * GitHub returns 404 when the file
+     * doesn't exist.
+     */
+
     if (
-      error.status === 404
+      error.message
+        .toLowerCase()
+        .includes("not found")
     ) {
+
       return null;
+
     }
+
 
     throw error;
 
@@ -626,7 +748,30 @@ async function getGithubFile(
 
 
 /* =========================================
-   MAIN FUNCTION
+   CHECK IF SLUG EXISTS
+   ========================================= */
+
+async function postExists(
+  slug
+) {
+
+  const filePath =
+    `${slug}.html`;
+
+
+  const existing =
+    await getGithubFile(
+      filePath
+    );
+
+
+  return existing !== null;
+
+}
+
+
+/* =========================================
+   NETLIFY FUNCTION HANDLER
    ========================================= */
 
 exports.handler =
@@ -649,6 +794,10 @@ exports.handler =
     }
 
 
+    /*
+     * Only POST is allowed.
+     */
+
     if (
       event.httpMethod !==
       "POST"
@@ -658,7 +807,7 @@ exports.handler =
         405,
         {
           success: false,
-          message:
+          error:
             "Method not allowed."
         }
       );
@@ -672,12 +821,17 @@ exports.handler =
 
     if (!ACCESS_CODE) {
 
+      console.error(
+        "ADMIN_ACCESS_CODE is not configured."
+      );
+
+
       return response(
         500,
         {
           success: false,
-          message:
-            "POST_ACCESS_CODE is not configured."
+          error:
+            "Publishing is not configured."
         }
       );
 
@@ -686,23 +840,29 @@ exports.handler =
 
     if (!GITHUB_TOKEN) {
 
+      console.error(
+        "GITHUB_TOKEN is not configured."
+      );
+
+
       return response(
         500,
         {
           success: false,
-          message:
-            "GITHUB_TOKEN is not configured."
+          error:
+            "Publishing is not configured."
         }
       );
 
     }
 
 
-    /*
-     * Parse request.
-     */
+    /* =====================================
+       PARSE REQUEST
+       ===================================== */
 
     let body;
+
 
     try {
 
@@ -717,7 +877,7 @@ exports.handler =
         400,
         {
           success: false,
-          message:
+          error:
             "Invalid request."
         }
       );
@@ -725,12 +885,21 @@ exports.handler =
     }
 
 
+    const suppliedAccessCode =
+      String(
+        body.accessCode || ""
+      );
+
+
     /*
-     * Verify access code.
+     * Verify the publishing access code.
+     *
+     * The actual code remains on the
+     * server and is never returned.
      */
 
     if (
-      body.accessCode !==
+      suppliedAccessCode !==
       ACCESS_CODE
     ) {
 
@@ -738,7 +907,7 @@ exports.handler =
         401,
         {
           success: false,
-          message:
+          error:
             "Invalid access code."
         }
       );
@@ -746,35 +915,35 @@ exports.handler =
     }
 
 
-    const incoming =
+    /* =====================================
+       VALIDATE POST
+       ===================================== */
+
+    const submittedPost =
       body.post || {};
 
 
-    /*
-     * Validate required fields.
-     */
-
     const title =
       String(
-        incoming.title || ""
+        submittedPost.title || ""
       ).trim();
 
 
     const category =
       String(
-        incoming.category || ""
+        submittedPost.category || ""
       ).trim();
 
 
     const excerpt =
       String(
-        incoming.excerpt || ""
+        submittedPost.excerpt || ""
       ).trim();
 
 
-    const rawContent =
+    const content =
       String(
-        incoming.content || ""
+        submittedPost.content || ""
       ).trim();
 
 
@@ -784,8 +953,8 @@ exports.handler =
         400,
         {
           success: false,
-          message:
-            "A post title is required."
+          error:
+            "Title is required."
         }
       );
 
@@ -798,8 +967,8 @@ exports.handler =
         400,
         {
           success: false,
-          message:
-            "A category is required."
+          error:
+            "Category is required."
         }
       );
 
@@ -812,47 +981,12 @@ exports.handler =
         400,
         {
           success: false,
-          message:
-            "An excerpt is required."
+          error:
+            "Excerpt is required."
         }
       );
 
     }
-
-
-    if (!rawContent) {
-
-      return response(
-        400,
-        {
-          success: false,
-          message:
-            "Post content is required."
-        }
-      );
-
-    }
-
-
-    /*
-     * Generate the slug on the server.
-     *
-     * The server does NOT trust the
-     * slug sent by the browser.
-     */
-
-    const slug =
-      slugify(title);
-
-
-    /*
-     * Sanitize article content.
-     */
-
-    const content =
-      sanitizeHtml(
-        rawContent
-      );
 
 
     if (!content) {
@@ -861,52 +995,69 @@ exports.handler =
         400,
         {
           success: false,
-          message:
-            "The post content is empty after sanitization."
+          error:
+            "Content is required."
         }
       );
 
     }
 
 
-    /*
-     * Tags.
-     */
+    /* =====================================
+       CREATE SERVER-SIDE POST DATA
+       ===================================== */
 
-    const tags =
-      Array.isArray(
-        incoming.tags
-      )
-
-        ? incoming.tags
-            .map(
-              tag =>
-                String(tag)
-                  .trim()
-            )
-            .filter(Boolean)
-            .slice(0, 20)
-
-        : [];
+    const slug =
+      slugify(
+        title
+      );
 
 
-    /*
-     * Date is generated on the server.
-     */
-
-    const date =
-      getPublishDate();
-
-
-    /*
-     * Reading time is also calculated
-     * from the actual content.
-     */
-
-    const readingTime =
-      calculateReadingTime(
+    const cleanContent =
+      sanitizeHtml(
         content
       );
+
+
+    if (!cleanContent) {
+
+      return response(
+        400,
+        {
+          success: false,
+          error:
+            "Post content is empty after sanitization."
+        }
+      );
+
+    }
+
+
+    let tags = [];
+
+
+    if (
+      Array.isArray(
+        submittedPost.tags
+      )
+    ) {
+
+      tags =
+        submittedPost.tags
+          .map(function(tag) {
+
+            return String(
+              tag
+            ).trim();
+
+          })
+          .filter(Boolean)
+          .slice(
+            0,
+            20
+          );
+
+    }
 
 
     const post = {
@@ -917,195 +1068,245 @@ exports.handler =
 
       category,
 
-      date,
+      date:
+        getPublishDate(),
 
-      readingTime,
+      readingTime:
+        calculateReadingTime(
+          cleanContent
+        ),
 
       excerpt,
 
       tags,
 
-      content
+      content:
+        cleanContent
 
     };
 
 
-    try {
+    /* =====================================
+       LOAD POST TEMPLATE
+       ===================================== */
 
-      /*
-       * Get the current post template.
-       */
-
-      const templateFile =
-        await getGithubFile(
-          "post.html"
-        );
-
-
-      if (!templateFile) {
-
-        return response(
-          500,
-          {
-            success: false,
-            message:
-              "post.html could not be found in GitHub."
-          }
-        );
-
-      }
-
-
-      const template =
-        Buffer
-          .from(
-            templateFile.content,
-            "base64"
-          )
-          .toString(
-            "utf8"
-          );
-
-
-      /*
-       * Create the source HTML.
-       */
-
-      const sourceHtml =
-        createSourcePost(
-          template,
-          post
-        );
-
-
-      /*
-       * GitHub path.
-       */
-
-      const filePath =
-        `posts/${slug}.html`;
-
-
-      /*
-       * Check whether this post
-       * already exists.
-       */
-
-      const existingFile =
-        await getGithubFile(
-          filePath
-        );
-
-
-      const commitBody = {
-
-        message:
-          existingFile
-            ? `Update post: ${title}`
-            : `Publish post: ${title}`,
-
-        content:
-          Buffer
-            .from(
-              sourceHtml,
-              "utf8"
-            )
-            .toString(
-              "base64"
-            ),
-
-        branch:
-          BRANCH
-
-      };
-
-
-      /*
-       * Existing GitHub files require
-       * their SHA when being updated.
-       */
-
-      if (
-        existingFile &&
-        existingFile.sha
-      ) {
-
-        commitBody.sha =
-          existingFile.sha;
-
-      }
-
-
-      /*
-       * Create or update the post.
-       */
-
-      await githubRequest(
-        `/repos/${encodeURIComponent(OWNER)}/${encodeURIComponent(REPO)}/contents/${filePath}`,
-        {
-          method:
-            "PUT",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify(
-              commitBody
-            )
-        }
+    const templateFile =
+      await getGithubFile(
+        "post.html"
       );
 
 
-      /*
-       * Success.
-       */
+    if (!templateFile) {
 
       return response(
-        200,
+        500,
         {
-          success: true,
-
-          message:
-            existingFile
-              ? "Post updated successfully."
-              : "Post published successfully.",
-
-          slug,
-
-          url:
-            `/${slug}`,
-
-          githubPath:
-            filePath
+          success: false,
+          error:
+            "post.html was not found in the GitHub repository."
         }
       );
 
+    }
+
+
+    let template;
+
+
+    try {
+
+      template =
+        Buffer.from(
+          templateFile.content,
+          "base64"
+        ).toString(
+          "utf8"
+        );
 
     } catch (error) {
 
       console.error(
-        "GitHub publishing error:",
+        "Could not decode post.html:",
         error
       );
 
 
       return response(
-        error.status === 401
-          ? 500
-          : 500,
-
+        500,
         {
           success: false,
-
-          message:
-            error.message ||
-            "Unable to publish the post."
+          error:
+            "Could not read post template."
         }
       );
 
     }
+
+
+    /* =====================================
+       CREATE POST HTML
+       ===================================== */
+
+    const sourcePost =
+      createSourcePost(
+        template,
+        post
+      );
+
+
+    const encodedContent =
+      Buffer.from(
+        sourcePost,
+        "utf8"
+      ).toString(
+        "base64"
+      );
+
+
+    /*
+     * IMPORTANT:
+     *
+     * The post is stored at the ROOT.
+     *
+     * Example:
+     *
+     * iran-fires-on-its-gulf-neighbors.html
+     *
+     * NOT:
+     *
+     * posts/iran-fires-on-its-gulf-neighbors.html
+     */
+
+    const filePath =
+      `${slug}.html`;
+
+
+    /* =====================================
+       CHECK FOR EXISTING POST
+       ===================================== */
+
+    const existing =
+      await getGithubFile(
+        filePath
+      );
+
+
+    /*
+     * If a file with the same slug exists,
+     * update it.
+     *
+     * Otherwise create it.
+     */
+
+    const githubBody = {
+
+      message:
+        existing
+          ? `Update post: ${title}`
+          : `Publish post: ${title}`,
+
+      content:
+        encodedContent,
+
+      branch:
+        BRANCH
+
+    };
+
+
+    if (
+      existing &&
+      existing.sha
+    ) {
+
+      githubBody.sha =
+        existing.sha;
+
+    }
+
+
+    /* =====================================
+       WRITE TO GITHUB
+       ===================================== */
+
+    const githubUrl =
+      `${GITHUB_API}/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(filePath)}`;
+
+
+    let result;
+
+
+    try {
+
+      result =
+        await githubRequest(
+          githubUrl,
+          {
+            method: "PUT",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify(
+                githubBody
+              )
+
+          }
+        );
+
+    } catch (error) {
+
+      console.error(
+        "GitHub publish error:",
+        error
+      );
+
+
+      return response(
+        500,
+        {
+          success: false,
+          error:
+            "Could not publish the post to GitHub."
+        }
+      );
+
+    }
+
+
+    /* =====================================
+       SUCCESS
+       ===================================== */
+
+    return response(
+      200,
+      {
+        success: true,
+
+        message:
+          existing
+            ? "Post updated successfully."
+            : "Post published successfully.",
+
+        slug:
+          post.slug,
+
+        url:
+          `/${post.slug}`,
+
+        githubPath:
+          filePath,
+
+        commit:
+          result &&
+          result.commit
+            ? result.commit.sha
+            : null
+
+      }
+    );
 
   };
