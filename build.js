@@ -13,6 +13,16 @@ const INDEX_PATH = path.join(
   "index.html"
 );
 
+const CATEGORIES_PATH = path.join(
+  ROOT,
+  "categories.html"
+);
+
+const SITEMAP_PATH = path.join(
+  ROOT,
+  "sitemap.xml"
+);
+
 
 /* =========================================
    FILES THAT ARE NOT POSTS
@@ -891,8 +901,6 @@ function renderHomeRecentPost(
 }
 
 
-
-
 /* =========================================
    REPLACE MARKER CONTENT
    ========================================= */
@@ -1104,6 +1112,381 @@ function buildPosts(
 
 
 /* =========================================
+   CATEGORY POST CARD
+   ========================================= */
+
+function renderCategoryPost(
+  post
+) {
+
+  return `
+<a
+  class="post-card"
+  href="/${encodeURIComponent(post.slug)}"
+>
+
+  <span class="post-category">
+    ${escapeHtml(post.category)}
+  </span>
+
+  <h3>
+    ${escapeHtml(post.title)}
+  </h3>
+
+  <p class="excerpt">
+    ${escapeHtml(post.excerpt)}
+  </p>
+
+  <div class="post-meta">
+
+    <span>
+      ${escapeHtml(post.date)}
+    </span>
+
+    <span class="dot"></span>
+
+    <span>
+      ${escapeHtml(post.readingTime)}
+    </span>
+
+  </div>
+
+</a>`;
+
+}
+
+
+/* =========================================
+   BUILD CATEGORY POST LIST
+   ========================================= */
+
+function buildCategories(
+  posts
+) {
+
+  if (
+    !fs.existsSync(
+      CATEGORIES_PATH
+    )
+  ) {
+
+    console.warn(
+      "categories.html was not found. Skipping category build."
+    );
+
+    return;
+
+  }
+
+
+  let html =
+    fs.readFileSync(
+      CATEGORIES_PATH,
+      "utf8"
+    );
+
+
+  /*
+   * Group posts by category.
+   */
+
+  const categories = {};
+
+
+  posts.forEach(function(post) {
+
+    const category =
+      post.category || "Uncategorized";
+
+
+    if (
+      !categories[category]
+    ) {
+
+      categories[category] = [];
+
+    }
+
+
+    categories[category].push(
+      post
+    );
+
+  });
+
+
+  /*
+   * Sort categories alphabetically.
+   */
+
+  const categoryNames =
+    Object.keys(
+      categories
+    ).sort(function(a, b) {
+
+      return a.localeCompare(b);
+
+    });
+
+
+  let categoryHtml = "";
+
+
+  categoryNames.forEach(function(category) {
+
+    const categoryPosts =
+      categories[category];
+
+
+    categoryHtml += `
+<section class="category-section">
+
+  <div class="category-heading">
+
+    <h2 class="category-title">
+      ${escapeHtml(category)}
+    </h2>
+
+    <span class="category-count">
+      ${categoryPosts.length}
+      ${categoryPosts.length === 1 ? "post" : "posts"}
+    </span>
+
+  </div>
+
+  <div class="category-posts">
+
+    ${categoryPosts
+      .map(renderCategoryPost)
+      .join("\n")}
+
+  </div>
+
+</section>
+`;
+
+  });
+
+
+  /*
+   * Replace the empty categoryList container
+   * from categories.html.
+   *
+   * This expects:
+   *
+   * <div class="category-list" id="categoryList"></div>
+   */
+
+  const categoryListRegex =
+    /(<div[^>]*class=["'][^"']*category-list[^"']*["'][^>]*id=["']categoryList["'][^>]*>)[\s\S]*?(<\/div>)/i;
+
+
+  if (
+    categoryListRegex.test(html)
+  ) {
+
+    html =
+      html.replace(
+        categoryListRegex,
+        `$1\n${categoryHtml}\n$2`
+      );
+
+  } else {
+
+    /*
+     * Also support id appearing before class.
+     */
+
+    const alternateCategoryListRegex =
+      /(<div[^>]*id=["']categoryList["'][^>]*class=["'][^"']*category-list[^"']*["'][^>]*>)[\s\S]*?(<\/div>)/i;
+
+
+    if (
+      alternateCategoryListRegex.test(html)
+    ) {
+
+      html =
+        html.replace(
+          alternateCategoryListRegex,
+          `$1\n${categoryHtml}\n$2`
+        );
+
+    } else {
+
+      console.warn(
+        "categoryList container was not found in categories.html."
+      );
+
+      return;
+
+    }
+
+  }
+
+
+  fs.writeFileSync(
+    CATEGORIES_PATH,
+    html,
+    "utf8"
+  );
+
+
+  console.log(
+    `Built category list: ${categoryNames.length} categor${categoryNames.length === 1 ? "y" : "ies"}.`
+  );
+
+}
+
+
+/* =========================================
+   BUILD SITEMAP
+   ========================================= */
+
+function buildSitemap(
+  posts
+) {
+
+  const siteUrl =
+    (
+      process.env.NETLIFY_SITE_URL ||
+      process.env.URL ||
+      "https://realinsight.netlify.app"
+    )
+    .replace(/\/+$/, "");
+
+
+  const urls = [];
+
+
+  /*
+   * Homepage
+   */
+
+  urls.push(`
+  <url>
+
+    <loc>
+      ${escapeHtml(siteUrl)}/
+    </loc>
+
+    <changefreq>
+      daily
+    </changefreq>
+
+    <priority>
+      1.0
+    </priority>
+
+  </url>`);
+
+
+  /*
+   * Categories page
+   */
+
+  urls.push(`
+  <url>
+
+    <loc>
+      ${escapeHtml(siteUrl)}/categories
+    </loc>
+
+    <changefreq>
+      weekly
+    </changefreq>
+
+    <priority>
+      0.8
+    </priority>
+
+  </url>`);
+
+
+  /*
+   * Individual posts
+   */
+
+  posts.forEach(function(post) {
+
+    const postUrl =
+      `${siteUrl}/${encodeURIComponent(post.slug)}`;
+
+
+    const postDate =
+      new Date(
+        post.date || 0
+      );
+
+
+    let lastmod = "";
+
+
+    if (
+      !Number.isNaN(
+        postDate.getTime()
+      )
+    ) {
+
+      lastmod =
+        postDate
+          .toISOString()
+          .split("T")[0];
+
+    }
+
+
+    urls.push(`
+  <url>
+
+    <loc>
+      ${escapeHtml(postUrl)}
+    </loc>
+
+    ${
+      lastmod
+        ? `<lastmod>${lastmod}</lastmod>`
+        : ""
+    }
+
+    <changefreq>
+      weekly
+    </changefreq>
+
+    <priority>
+      0.7
+    </priority>
+
+  </url>`);
+
+  });
+
+
+  const sitemap =
+`<?xml version="1.0" encoding="UTF-8"?>
+
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+>
+${urls.join("\n")}
+</urlset>
+`;
+
+
+  fs.writeFileSync(
+    SITEMAP_PATH,
+    sitemap,
+    "utf8"
+  );
+
+
+  console.log(
+    `Built sitemap.xml with ${posts.length + 2} URL(s).`
+  );
+
+}
+
+
+/* =========================================
    MAIN BUILD
    ========================================= */
 
@@ -1163,6 +1546,24 @@ function build() {
 
 
   buildHomepage(
+    posts
+  );
+
+
+  /*
+   * Build category post list.
+   */
+
+  buildCategories(
+    posts
+  );
+
+
+  /*
+   * Build sitemap.xml.
+   */
+
+  buildSitemap(
     posts
   );
 
