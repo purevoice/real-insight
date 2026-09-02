@@ -340,11 +340,16 @@ function readPosts() {
           ).trim(),
 
         date:
-          String(
-            data.date || ""
-          ).trim(),
+  String(
+    data.date || ""
+  ).trim(),
 
-        readingTime:
+publishedAt:
+  String(
+    data.publishedAt || ""
+  ).trim(),
+
+readingTime:
           String(
             data.readingTime || ""
           ).trim(),
@@ -387,10 +392,19 @@ function readPosts() {
 
   posts.sort(
   function(a, b) {
-    const dateA = Date.parse(a.date);
-    const dateB = Date.parse(b.date);
 
-    return dateB - dateA;
+    const timeA =
+      Date.parse(
+        a.publishedAt || a.date || ""
+      );
+
+    const timeB =
+      Date.parse(
+        b.publishedAt || b.date || ""
+      );
+
+    return timeB - timeA;
+
   }
 );
 
