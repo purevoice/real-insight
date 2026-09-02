@@ -386,15 +386,13 @@ function readPosts() {
    */
 
   posts.sort(
-    function(a, b) {
+  function(a, b) {
+    const dateA = Date.parse(a.date);
+    const dateB = Date.parse(b.date);
 
-      return (
-        new Date(b.date || 0) -
-        new Date(a.date || 0)
-      );
-
-    }
-  );
+    return dateB - dateA;
+  }
+);
 
 
   return posts;
