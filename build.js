@@ -2,10 +2,21 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = __dirname;
-const TEMPLATE_PATH = path.join(ROOT, "post.html");
-const INDEX_PATH = path.join(ROOT, "index.html");
-const CATEGORIES_PATH = path.join(ROOT, "categories.html");
-const SITEMAP_PATH = path.join(ROOT, "sitemap.xml");
+
+const TEMPLATE_PATH = path.join(
+  ROOT,
+  "post.html"
+);
+
+const INDEX_PATH = path.join(
+  ROOT,
+  "index.html"
+);
+
+
+/* =========================================
+   FILES THAT ARE NOT POSTS
+   ========================================= */
 
 const EXCLUDED_FILES = new Set([
   "index.html",
@@ -14,451 +25,877 @@ const EXCLUDED_FILES = new Set([
   "categories.html"
 ]);
 
-/* =========================================================
-   HELPERS
-========================================================= */
+
+/* =========================================
+   BASIC HELPERS
+   ========================================= */
 
 function escapeHtml(value) {
-  return String(value ?? "")
+
+  return String(value || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replace(/'/g, "&#039;");
+
 }
+
 
 function escapeAttribute(value) {
+
   return escapeHtml(value);
+
 }
+
+
+/* =========================================
+   POST DATA SCRIPT
+   ========================================= */
 
 function createPostDataScript(post) {
+
+  const data = {
+
+    slug:
+      post.slug,
+
+    title:
+      post.title,
+
+    category:
+      post.category,
+
+    date:
+      post.date,
+
+    readingTime:
+      post.readingTime,
+
+    excerpt:
+      post.excerpt,
+
+    tags:
+      post.tags || []
+
+  };
+
+
+  const json =
+    JSON.stringify(data)
+      .replace(/</g, "\\u003c")
+      .replace(/>/g, "\\u003e")
+      .replace(/&/g, "\\u0026");
+
+
   return `
-<script id="realInsightPostData" type="application/json">
-${JSON.stringify({
-  id: post.id || "",
-  title: post.title || "",
-  slug: post.slug || "",
-  category: post.category || "",
-  date: post.date || "",
-  readingTime: post.readingTime || "",
-  excerpt: post.excerpt || "",
-  tags: post.tags || [],
-  published: true
-})}
-</script>`;
+<script
+  type="application/json"
+  id="realInsightPostData"
+>${json}</script>`;
+
 }
 
-/* =========================================================
-   EXTRACT POST DATA
-========================================================= */
 
-function extractPostData(html) {
-  const match = html.match(
-    /<script[^>]*id=["']realInsightPostData["'][^>]*>([\s\S]*?)<\/script>/i
-  );
+/* =========================================
+   EXTRACT POST DATA
+   ========================================= */
+
+function extractPostData(
+  html,
+  filename
+) {
+
+  const match =
+    html.match(
+      /<script[^>]*id=["']realInsightPostData["'][^>]*>([\s\S]*?)<\/script>/i
+    );
+
 
   if (!match) {
-    return null;
+
+    throw new Error(
+      `${filename} does not contain post metadata.`
+    );
+
   }
+
 
   try {
-    return JSON.parse(match[1].trim());
+
+    return JSON.parse(
+      match[1].trim()
+    );
+
   } catch (error) {
-    console.warn("Could not parse post metadata:", error.message);
-    return null;
+
+    throw new Error(
+      `${filename} contains invalid post metadata.`
+    );
+
   }
+
 }
 
-function extractPostContent(html) {
-  const startMarker = "<!-- REAL_INSIGHT_CONTENT_START -->";
-  const endMarker = "<!-- REAL_INSIGHT_CONTENT_END -->";
 
-  const start = html.indexOf(startMarker);
-  const end = html.indexOf(endMarker);
+/* =========================================
+   EXTRACT ARTICLE CONTENT
+   ========================================= */
 
-  if (start === -1 || end === -1 || end <= start) {
-    return "";
+function extractPostContent(
+  html,
+  filename
+) {
+
+  const startMarker =
+    "<!-- REAL_INSIGHT_CONTENT_START -->";
+
+  const endMarker =
+    "<!-- REAL_INSIGHT_CONTENT_END -->";
+
+
+  const start =
+    html.indexOf(
+      startMarker
+    );
+
+
+  const end =
+    html.indexOf(
+      endMarker
+    );
+
+
+  if (
+    start === -1 ||
+    end === -1 ||
+    end < start
+  ) {
+
+    throw new Error(
+      `${filename} does not contain article content markers.`
+    );
+
   }
+
 
   return html
-    .slice(start + startMarker.length, end)
+    .slice(
+      start + startMarker.length,
+      end
+    )
     .trim();
+
 }
 
-/* =========================================================
-   POST FILE DETECTION
-========================================================= */
 
-function isPostFile(fileName) {
-  if (!fileName.endsWith(".html")) {
+/* =========================================
+   CHECK IF FILE IS A POST
+   ========================================= */
+
+function isPostFile(filename) {
+
+  if (
+    !filename
+      .toLowerCase()
+      .endsWith(".html")
+  ) {
+
     return false;
+
   }
 
-  if (EXCLUDED_FILES.has(fileName)) {
+
+  if (
+    EXCLUDED_FILES.has(
+      filename.toLowerCase()
+    )
+  ) {
+
     return false;
+
   }
+
 
   return true;
+
 }
 
-/* =========================================================
-   READ POSTS
-========================================================= */
+
+/* =========================================
+   READ POSTS FROM ROOT
+   ========================================= */
 
 function readPosts() {
-  const files = fs.readdirSync(ROOT);
+
+  const files =
+    fs.readdirSync(
+      ROOT
+    )
+    .filter(isPostFile);
+
 
   const posts = [];
 
-  for (const fileName of files) {
-    if (!isPostFile(fileName)) {
+
+  for (
+    const filename of files
+  ) {
+
+    const filePath =
+      path.join(
+        ROOT,
+        filename
+      );
+
+
+    const html =
+      fs.readFileSync(
+        filePath,
+        "utf8"
+      );
+
+
+    /*
+     * Only HTML files containing our
+     * post metadata are considered posts.
+     *
+     * This prevents unrelated HTML files
+     * in the root directory from being
+     * treated as posts.
+     */
+
+    if (
+      !html.includes(
+        'id="realInsightPostData"'
+      ) &&
+      !html.includes(
+        "id='realInsightPostData'"
+      )
+    ) {
+
       continue;
+
     }
 
-    const filePath = path.join(ROOT, fileName);
 
-    if (!fs.statSync(filePath).isFile()) {
-      continue;
+    try {
+
+      const data =
+        extractPostData(
+          html,
+          filename
+        );
+
+
+      const content =
+        extractPostContent(
+          html,
+          filename
+        );
+
+
+      const slug =
+        String(
+          data.slug ||
+          filename.replace(
+            /\.html$/i,
+            ""
+          )
+        )
+        .trim();
+
+
+      if (!slug) {
+
+        throw new Error(
+          `${filename} has no slug.`
+        );
+
+      }
+
+
+      posts.push({
+
+        slug,
+
+        title:
+          String(
+            data.title || ""
+          ).trim(),
+
+        category:
+          String(
+            data.category || ""
+          ).trim(),
+
+        date:
+          String(
+            data.date || ""
+          ).trim(),
+
+        readingTime:
+          String(
+            data.readingTime || ""
+          ).trim(),
+
+        excerpt:
+          String(
+            data.excerpt || ""
+          ).trim(),
+
+        tags:
+          Array.isArray(
+            data.tags
+          )
+            ? data.tags
+                .map(function(tag) {
+                  return String(tag).trim();
+                })
+                .filter(Boolean)
+            : [],
+
+        content
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        `Skipping ${filename}: ${error.message}`
+      );
+
     }
 
-    const html = fs.readFileSync(filePath, "utf8");
-
-    const data = extractPostData(html);
-
-    if (!data) {
-      continue;
-    }
-
-    const content = extractPostContent(html);
-
-    const slug = data.slug || fileName.replace(/\.html$/i, "");
-
-    posts.push({
-      id: data.id || slug,
-      title: data.title || "",
-      slug,
-      category: data.category || "Uncategorized",
-      date: data.date || "",
-      readingTime: data.readingTime || "",
-      excerpt: data.excerpt || "",
-      tags: Array.isArray(data.tags) ? data.tags : [],
-      content
-    });
   }
 
-  posts.sort((a, b) => {
-    const dateA = new Date(a.date).getTime() || 0;
-    const dateB = new Date(b.date).getTime() || 0;
 
-    return dateB - dateA;
-  });
+  /*
+   * Newest posts first.
+   */
+
+  posts.sort(
+    function(a, b) {
+
+      return (
+        new Date(b.date || 0) -
+        new Date(a.date || 0)
+      );
+
+    }
+  );
+
 
   return posts;
+
 }
 
-/* =========================================================
-   TAGS
-========================================================= */
+
+/* =========================================
+   TAG HTML
+   ========================================= */
 
 function renderTags(tags) {
-  if (!Array.isArray(tags) || tags.length === 0) {
+
+  if (
+    !Array.isArray(tags) ||
+    !tags.length
+  ) {
+
     return "";
+
   }
 
-  return `
-<div class="post-tags">
-  ${tags
-    .map(
-      tag => `
-    <a href="/categories?tag=${encodeURIComponent(tag)}" class="tag">
-      ${escapeHtml(tag)}
-    </a>
-  `
-    )
-    .join("")}
-</div>`;
-}
 
-/* =========================================================
-   RELATED POSTS
-========================================================= */
+  return tags
+    .map(function(tag) {
 
-function renderRelatedPosts(post, posts) {
-  const related = posts
-    .filter(item => item.slug !== post.slug)
-    .sort((a, b) => {
-      const aSameCategory =
-        a.category.toLowerCase() === post.category.toLowerCase();
+      return `
+<a
+  href="/categories?tag=${encodeURIComponent(tag)}"
+  class="post-tag"
+>
+  ${escapeHtml(tag)}
+</a>`;
 
-      const bSameCategory =
-        b.category.toLowerCase() === post.category.toLowerCase();
-
-      if (aSameCategory && !bSameCategory) return -1;
-      if (!aSameCategory && bSameCategory) return 1;
-
-      const dateA = new Date(a.date).getTime() || 0;
-      const dateB = new Date(b.date).getTime() || 0;
-
-      return dateB - dateA;
     })
-    .slice(0, 3);
+    .join("");
 
-  if (related.length === 0) {
-    return "";
-  }
-
-  return `
-<div class="related-posts">
-  <h2>Related Posts</h2>
-
-  <div class="related-grid">
-    ${related
-      .map(
-        item => `
-      <article class="related-card">
-        <a href="/${escapeAttribute(item.slug)}">
-          <span class="related-category">
-            ${escapeHtml(item.category)}
-          </span>
-
-          <h3>${escapeHtml(item.title)}</h3>
-
-          <p>${escapeHtml(item.excerpt)}</p>
-
-          <span class="related-date">
-            ${escapeHtml(item.date)}
-          </span>
-        </a>
-      </article>
-    `
-      )
-      .join("")}
-  </div>
-</div>`;
 }
 
-/* =========================================================
-   RECENT POSTS
-========================================================= */
 
-function renderRecentPosts(posts) {
-  const recent = posts.slice(0, 5);
+/* =========================================
+   RELATED POSTS
+   ========================================= */
 
-  if (recent.length === 0) {
-    return "";
+function renderRelatedPosts(
+  post,
+  allPosts
+) {
+
+  const related =
+    allPosts
+      .filter(function(item) {
+
+        return (
+          item.slug !== post.slug &&
+          item.category.toLowerCase() ===
+            post.category.toLowerCase()
+        );
+
+      })
+      .slice(0, 3);
+
+
+  /*
+   * If there aren't enough posts
+   * in the same category, fill the
+   * remaining spaces with recent posts.
+   */
+
+  if (
+    related.length < 3
+  ) {
+
+    allPosts
+      .filter(function(item) {
+
+        return (
+          item.slug !== post.slug &&
+          !related.some(function(existing) {
+
+            return (
+              existing.slug ===
+              item.slug
+            );
+
+          })
+        );
+
+      })
+      .slice(
+        0,
+        3 - related.length
+      )
+      .forEach(function(item) {
+
+        related.push(item);
+
+      });
+
   }
 
-  return recent
-    .map(
-      post => `
+
+  if (!related.length) {
+
+    return "";
+
+  }
+
+
+  return related
+    .map(function(item) {
+
+      return `
+<a
+  class="related-card"
+  href="/${encodeURIComponent(item.slug)}"
+>
+
+  <span class="post-category">
+    ${escapeHtml(item.category)}
+  </span>
+
+  <h3>
+    ${escapeHtml(item.title)}
+  </h3>
+
+  <p class="excerpt">
+    ${escapeHtml(item.excerpt)}
+  </p>
+
+  <div class="post-meta">
+
+    <span>
+      ${escapeHtml(item.date)}
+    </span>
+
+    <span class="dot"></span>
+
+    <span>
+      ${escapeHtml(item.readingTime)}
+    </span>
+
+  </div>
+
+</a>`;
+
+    })
+    .join("");
+
+}
+
+
+/* =========================================
+   RECENT POSTS
+   ========================================= */
+
+function renderRecentPosts(
+  allPosts
+) {
+
+  return allPosts
+    .slice(0, 5)
+    .map(function(post) {
+
+      return `
 <li>
-  <a href="/${escapeAttribute(post.slug)}">
+
+  <a
+    href="/${encodeURIComponent(post.slug)}"
+  >
     ${escapeHtml(post.title)}
   </a>
-</li>`
-    )
+
+  <span class="date">
+    ${escapeHtml(post.date)}
+  </span>
+
+</li>`;
+
+    })
     .join("");
+
 }
 
-/* =========================================================
-   POST NAVIGATION
-========================================================= */
 
-function renderPostNavigation(post, posts) {
-  const index = posts.findIndex(item => item.slug === post.slug);
+/* =========================================
+   POST NAVIGATION
+   ========================================= */
+
+function renderPostNavigation(
+  post,
+  allPosts
+) {
+
+  const index =
+    allPosts.findIndex(
+      function(item) {
+
+        return (
+          item.slug ===
+          post.slug
+        );
+
+      }
+    );
+
 
   if (index === -1) {
+
     return "";
+
   }
 
-  const previous = posts[index + 1] || null;
-  const next = posts[index - 1] || null;
 
-  return `
-<div class="post-navigation">
+  const previous =
+    allPosts[index + 1] || null;
 
-  <div class="post-nav-prev">
-    ${
-      previous
-        ? `
-      <span>Previous Post</span>
-      <a href="/${escapeAttribute(previous.slug)}">
-        ${escapeHtml(previous.title)}
-      </a>
-    `
-        : ""
-    }
-  </div>
+  const next =
+    allPosts[index - 1] || null;
 
-  <div class="post-nav-next">
-    ${
-      next
-        ? `
-      <span>Next Post</span>
-      <a href="/${escapeAttribute(next.slug)}">
-        ${escapeHtml(next.title)}
-      </a>
-    `
-        : ""
-    }
-  </div>
 
-</div>`;
-}
+  let html = `
+<div class="post-navigation-inner">
+`;
 
-/* =========================================================
-   RENDER INDIVIDUAL POST
-========================================================= */
 
-function renderPost(post, posts, template) {
-  const siteUrl =
-    process.env.NETLIFY_SITE_URL ||
-    process.env.URL ||
-    "https://realinsight.netlify.app";
+  if (previous) {
 
-  const canonicalUrl = `${siteUrl.replace(/\/$/, "")}/${post.slug}`;
+    html += `
+<a
+  class="post-nav previous"
+  href="/${encodeURIComponent(previous.slug)}"
+>
 
-  let html = template;
+  <span class="post-nav-label">
+    Previous post
+  </span>
 
-  html = html.replace(
-    /<title>[\s\S]*?<\/title>/i,
-    `<title>${escapeHtml(post.title)} | Real Insight</title>`
-  );
+  <strong>
+    ${escapeHtml(previous.title)}
+  </strong>
 
-  html = html.replace(
-    /<meta\s+name=["']description["'][^>]*>/i,
-    `<meta name="description" content="${escapeAttribute(post.excerpt)}">`
-  );
+</a>`;
 
-  html = html.replace(
-    /<link\s+rel=["']canonical["'][^>]*>/i,
-    `<link rel="canonical" href="${escapeAttribute(canonicalUrl)}">`
-  );
-
-  if (!/<link\s+rel=["']canonical["']/i.test(html)) {
-    html = html.replace(
-      /<\/head>/i,
-      `  <link rel="canonical" href="${escapeAttribute(canonicalUrl)}">\n</head>`
-    );
-  }
-
-  html = html.replace(
-    /\{\{TITLE\}\}/g,
-    escapeHtml(post.title)
-  );
-
-  html = html.replace(
-    /\{\{CATEGORY\}\}/g,
-    escapeHtml(post.category)
-  );
-
-  html = html.replace(
-    /\{\{DATE\}\}/g,
-    escapeHtml(post.date)
-  );
-
-  html = html.replace(
-    /\{\{READING_TIME\}\}/g,
-    escapeHtml(post.readingTime)
-  );
-
-  html = html.replace(
-    /\{\{EXCERPT\}\}/g,
-    escapeHtml(post.excerpt)
-  );
-
-  html = html.replace(
-    /\{\{CONTENT\}\}/g,
-    post.content
-  );
-
-  html = html.replace(
-    /\{\{TAGS\}\}/g,
-    renderTags(post.tags)
-  );
-
-  html = html.replace(
-    /\{\{RELATED_POSTS\}\}/g,
-    renderRelatedPosts(post, posts)
-  );
-
-  html = html.replace(
-    /\{\{RECENT_POSTS\}\}/g,
-    renderRecentPosts(posts)
-  );
-
-  html = html.replace(
-    /\{\{POST_NAVIGATION\}\}/g,
-    renderPostNavigation(post, posts)
-  );
-
-  const postDataScript = createPostDataScript(post);
-
-  if (html.includes("</body>")) {
-    html = html.replace(
-      /<\/body>/i,
-      `${postDataScript}\n</body>`
-    );
   } else {
-    html += postDataScript;
+
+    html += `
+<div class="post-nav previous empty"></div>`;
+
   }
+
+
+  if (next) {
+
+    html += `
+<a
+  class="post-nav next"
+  href="/${encodeURIComponent(next.slug)}"
+>
+
+  <span class="post-nav-label">
+    Next post
+  </span>
+
+  <strong>
+    ${escapeHtml(next.title)}
+  </strong>
+
+</a>`;
+
+  } else {
+
+    html += `
+<div class="post-nav next empty"></div>`;
+
+  }
+
+
+  html += `
+</div>`;
+
 
   return html;
+
 }
 
-/* =========================================================
-   HOMEPAGE
-========================================================= */
 
-function renderHomePostCard(post) {
+/* =========================================
+   RENDER POST
+   ========================================= */
+
+function renderPost(
+  post,
+  allPosts,
+  template
+) {
+
+  /*
+   * Netlify provides the site URL through
+   * the URL environment variable.
+   *
+   * NETLIFY_SITE_URL can also be supplied
+   * manually if you want to override it.
+   */
+
+  const siteUrl =
+    (
+      process.env.NETLIFY_SITE_URL ||
+      process.env.URL ||
+      "https://realinsight.netlify.app"
+    )
+    .replace(/\/+$/, "");
+
+
+  const canonical =
+    `${siteUrl}/${post.slug}`;
+
+
+  let html =
+    template;
+
+
+  html =
+    html.replaceAll(
+      "{{POST_DATA}}",
+      createPostDataScript(
+        post
+      )
+    );
+
+
+  html =
+    html.replaceAll(
+      "{{TITLE}}",
+      escapeHtml(
+        post.title
+      )
+    );
+
+
+  html =
+    html.replaceAll(
+      "{{EXCERPT}}",
+      escapeHtml(
+        post.excerpt
+      )
+    );
+
+
+  html =
+    html.replaceAll(
+      "{{CANONICAL}}",
+      escapeAttribute(
+        canonical
+      )
+    );
+
+
+  html =
+    html.replaceAll(
+      "{{CATEGORY}}",
+      escapeHtml(
+        post.category
+      )
+    );
+
+
+  html =
+    html.replaceAll(
+      "{{DATE}}",
+      escapeHtml(
+        post.date
+      )
+    );
+
+
+  html =
+    html.replaceAll(
+      "{{READING_TIME}}",
+      escapeHtml(
+        post.readingTime
+      )
+    );
+
+
+  html =
+    html.replaceAll(
+      "{{CONTENT}}",
+      post.content
+    );
+
+
+  html =
+    html.replaceAll(
+      "{{TAGS}}",
+      renderTags(
+        post.tags
+      )
+    );
+
+
+  html =
+    html.replaceAll(
+      "{{RELATED_POSTS}}",
+      renderRelatedPosts(
+        post,
+        allPosts
+      )
+    );
+
+
+  html =
+    html.replaceAll(
+      "{{RECENT_POSTS}}",
+      renderRecentPosts(
+        allPosts
+      )
+    );
+
+
+  html =
+    html.replaceAll(
+      "{{POST_NAVIGATION}}",
+      renderPostNavigation(
+        post,
+        allPosts
+      )
+    );
+
+
+  return html;
+
+}
+
+
+/* =========================================
+   HOMEPAGE POST CARD
+   ========================================= */
+
+function renderHomePostCard(
+  post
+) {
+
   return `
-<article class="post-card">
+<a
+  class="post-card"
+  href="/${encodeURIComponent(post.slug)}"
+>
 
-  <div class="post-card-content">
+  <span class="post-category">
+    ${escapeHtml(post.category)}
+  </span>
 
-    <div class="post-card-meta">
-      <span class="post-card-category">
-        ${escapeHtml(post.category)}
-      </span>
+  <h3>
+    ${escapeHtml(post.title)}
+  </h3>
 
-      <span class="post-card-date">
-        ${escapeHtml(post.date)}
-      </span>
-    </div>
+  <p class="excerpt">
+    ${escapeHtml(post.excerpt)}
+  </p>
 
-    <h3>
-      <a href="/${escapeAttribute(post.slug)}">
-        ${escapeHtml(post.title)}
-      </a>
-    </h3>
+  <div class="post-meta">
 
-    <p>
-      ${escapeHtml(post.excerpt)}
-    </p>
+    <span>
+      ${escapeHtml(post.date)}
+    </span>
 
-    <div class="post-card-footer">
-      <span>
-        ${escapeHtml(post.readingTime)}
-      </span>
+    <span class="dot"></span>
 
-      <a href="/${escapeAttribute(post.slug)}">
-        Read more
-      </a>
-    </div>
+    <span>
+      ${escapeHtml(post.readingTime)}
+    </span>
 
   </div>
 
-</article>`;
+</a>`;
+
 }
 
-function renderHomeRecentPost(post) {
+
+/* =========================================
+   HOMEPAGE RECENT POST
+   ========================================= */
+
+function renderHomeRecentPost(
+  post
+) {
+
   return `
 <li>
-  <a href="/${escapeAttribute(post.slug)}">
+
+  <a
+    href="/${encodeURIComponent(post.slug)}"
+  >
     ${escapeHtml(post.title)}
   </a>
+
+  <span class="date">
+    ${escapeHtml(post.date)}
+  </span>
+
 </li>`;
+
 }
+
+
+
+
+/* =========================================
+   REPLACE MARKER CONTENT
+   ========================================= */
 
 function replaceBetweenMarkers(
   html,
@@ -466,410 +903,295 @@ function replaceBetweenMarkers(
   endMarker,
   replacement
 ) {
-  const start = html.indexOf(startMarker);
-  const end = html.indexOf(endMarker);
 
-  if (start === -1 || end === -1 || end < start) {
-    return html;
+  const start =
+    html.indexOf(
+      startMarker
+    );
+
+
+  const end =
+    html.indexOf(
+      endMarker
+    );
+
+
+  if (
+    start === -1 ||
+    end === -1 ||
+    end < start
+  ) {
+
+    throw new Error(
+      `Could not find homepage markers: ${startMarker}`
+    );
+
   }
+
 
   return (
-    html.slice(0, start + startMarker.length) +
+    html.slice(
+      0,
+      start + startMarker.length
+    ) +
+
     "\n" +
+
     replacement +
+
     "\n" +
-    html.slice(end)
+
+    html.slice(
+      end
+    )
   );
+
 }
 
-function buildHomepage(posts) {
-  let html = fs.readFileSync(INDEX_PATH, "utf8");
 
-  const postCards = posts
-    .map(renderHomePostCard)
-    .join("\n");
+/* =========================================
+   BUILD HOMEPAGE
+   ========================================= */
 
-  const recentPosts = posts
-    .slice(0, 5)
-    .map(renderHomeRecentPost)
-    .join("\n");
+function buildHomepage(
+  posts
+) {
 
-  html = replaceBetweenMarkers(
-    html,
-    "<!-- POSTS_START -->",
-    "<!-- POSTS_END -->",
-    postCards
-  );
-
-  html = replaceBetweenMarkers(
-    html,
-    "<!-- RECENT_POSTS_START -->",
-    "<!-- RECENT_POSTS_END -->",
-    recentPosts
-  );
-
-  if (posts.length > 0) {
-    html = html.replace(
-      /<div[^>]*class=["']empty-state["'][^>]*id=["']emptyState["'][^>]*hidden[^>]*>[\s\S]*?<\/div>/i,
-      match => match
-    );
-  }
-
-  fs.writeFileSync(INDEX_PATH, html, "utf8");
-}
-
-/* =========================================================
-   BUILD POSTS
-========================================================= */
-
-function buildPosts(posts, template) {
-  for (const post of posts) {
-    const outputPath = path.join(ROOT, `${post.slug}.html`);
-
-    const html = renderPost(
-      post,
-      posts,
-      template
-    );
-
-    fs.writeFileSync(
-      outputPath,
-      html,
+  let html =
+    fs.readFileSync(
+      INDEX_PATH,
       "utf8"
     );
 
-    console.log(`Built post: ${post.slug}.html`);
-  }
-}
 
-/* =========================================================
-   CATEGORY POST LIST
-========================================================= */
+  const postCards =
+    posts
+      .map(
+        renderHomePostCard
+      )
+      .join("\n");
 
-function renderCategoryPost(post) {
-  return `
-<article class="post-card">
 
-  <div class="post-card-content">
+  const recentPosts =
+    posts
+      .slice(0, 5)
+      .map(
+        renderHomeRecentPost
+      )
+      .join("\n");
 
-    <div class="post-card-meta">
-      <span class="post-card-category">
-        ${escapeHtml(post.category)}
-      </span>
 
-      <span class="post-card-date">
-        ${escapeHtml(post.date)}
-      </span>
-    </div>
+  html =
+    replaceBetweenMarkers(
+      html,
 
-    <h3>
-      <a href="/${escapeAttribute(post.slug)}">
-        ${escapeHtml(post.title)}
-      </a>
-    </h3>
+      "<!-- POSTS_START -->",
 
-    <p>
-      ${escapeHtml(post.excerpt)}
-    </p>
+      "<!-- POSTS_END -->",
 
-    <div class="post-card-footer">
-      <span>
-        ${escapeHtml(post.readingTime)}
-      </span>
-
-      <a href="/${escapeAttribute(post.slug)}">
-        Read more
-      </a>
-    </div>
-
-  </div>
-
-</article>`;
-}
-
-function buildCategories(posts) {
-  if (!fs.existsSync(CATEGORIES_PATH)) {
-    console.warn("categories.html not found. Skipping category build.");
-    return;
-  }
-
-  let html = fs.readFileSync(
-    CATEGORIES_PATH,
-    "utf8"
-  );
-
-  /*
-   * Group posts by category.
-   */
-  const grouped = {};
-
-  for (const post of posts) {
-    const category =
-      post.category &&
-      post.category.trim()
-        ? post.category.trim()
-        : "Uncategorized";
-
-    if (!grouped[category]) {
-      grouped[category] = [];
-    }
-
-    grouped[category].push(post);
-  }
-
-  /*
-   * Sort category names alphabetically.
-   */
-  const categories = Object.keys(grouped).sort(
-    (a, b) => a.localeCompare(b)
-  );
-
-  const categorySections = categories
-    .map(category => {
-      const categoryPosts = grouped[category];
-
-      return `
-<section class="category-section">
-
-  <div class="section-heading">
-    <h2 class="category-title">
-      ${escapeHtml(category)}
-    </h2>
-
-    <span class="category-count">
-      ${categoryPosts.length}
-      ${categoryPosts.length === 1 ? "post" : "posts"}
-    </span>
-  </div>
-
-  <div class="category-posts">
-    ${categoryPosts
-      .map(renderCategoryPost)
-      .join("\n")}
-  </div>
-
-</section>`;
-    })
-    .join("\n");
-
-  /*
-   * The category page contains:
-   *
-   * <div class="category-list" id="categoryList"></div>
-   *
-   * Replace only the inside of that element.
-   */
-  const categoryListRegex =
-    /(<div[^>]*id=["']categoryList["'][^>]*>)[\s\S]*?(<\/div>\s*)(?=<\/section>|<\/main>|<footer|<script|$)/i;
-
-  if (categoryListRegex.test(html)) {
-    html = html.replace(
-      categoryListRegex,
-      `$1\n${categorySections}\n$2`
-    );
-  } else {
-    /*
-     * Fallback for a categoryList element where the closing
-     * div is not immediately followed by one of the expected
-     * elements.
-     */
-    const openingMatch = html.match(
-      /<div[^>]*id=["']categoryList["'][^>]*>/i
+      postCards
     );
 
-    if (openingMatch) {
-      const openingTag = openingMatch[0];
-      const start = html.indexOf(openingTag);
 
-      const contentStart =
-        start + openingTag.length;
+  html =
+    replaceBetweenMarkers(
+      html,
 
-      const closingTag =
-        html.indexOf("</div>", contentStart);
+      "<!-- RECENT_POSTS_START -->",
 
-      if (closingTag !== -1) {
-        html =
-          html.slice(0, contentStart) +
-          "\n" +
-          categorySections +
-          "\n" +
-          html.slice(closingTag);
-      }
+      "<!-- RECENT_POSTS_END -->",
+
+      recentPosts
+    );
+
+
+  /*
+   * Show the empty message only when
+   * there are no published posts.
+   */
+
+  const emptyStateRegex =
+    /<div class="empty-state" id="emptyState"[^>]*>/;
+
+
+  if (
+    emptyStateRegex.test(html)
+  ) {
+
+    if (posts.length) {
+
+      html =
+        html.replace(
+          emptyStateRegex,
+          '<div class="empty-state" id="emptyState" hidden>'
+        );
+
     } else {
-      console.warn(
-        "categoryList element not found in categories.html"
-      );
+
+      html =
+        html.replace(
+          emptyStateRegex,
+          '<div class="empty-state" id="emptyState">'
+        );
+
     }
+
   }
+
 
   fs.writeFileSync(
-    CATEGORIES_PATH,
+    INDEX_PATH,
     html,
     "utf8"
   );
 
-  console.log(
-    `Built category page with ${categories.length} categories.`
-  );
 }
 
-/* =========================================================
-   SITEMAP
-========================================================= */
 
-function escapeXml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
+/* =========================================
+   BUILD POSTS
+   ========================================= */
 
-function getSiteUrl() {
-  return (
-    process.env.NETLIFY_SITE_URL ||
-    process.env.URL ||
-    "https://realinsight.netlify.app"
-  ).replace(/\/$/, "");
-}
+function buildPosts(
+  posts,
+  template
+) {
 
-function formatSitemapDate(date) {
-  if (!date) {
-    return new Date().toISOString().split("T")[0];
+  for (
+    const post of posts
+  ) {
+
+    const output =
+      renderPost(
+        post,
+        posts,
+        template
+      );
+
+
+    /*
+     * IMPORTANT:
+     *
+     * Posts are written directly into
+     * the repository root.
+     *
+     * Example:
+     *
+     * /iran-fires-on-its-gulf-neighbors.html
+     */
+
+    const filePath =
+      path.join(
+        ROOT,
+        `${post.slug}.html`
+      );
+
+
+    fs.writeFileSync(
+      filePath,
+      output,
+      "utf8"
+    );
+
+
+    console.log(
+      `Built: /${post.slug}`
+    );
+
   }
 
-  const parsed = new Date(date);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return new Date().toISOString().split("T")[0];
-  }
-
-  return parsed.toISOString().split("T")[0];
 }
 
-function buildSitemap(posts) {
-  const siteUrl = getSiteUrl();
 
-  const urls = [];
-
-  /*
-   * Homepage
-   */
-  urls.push(`
-  <url>
-    <loc>${escapeXml(`${siteUrl}/`)}</loc>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>`);
-
-  /*
-   * Categories page
-   */
-  urls.push(`
-  <url>
-    <loc>${escapeXml(`${siteUrl}/categories`)}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>`);
-
-  /*
-   * Individual posts
-   */
-  for (const post of posts) {
-    urls.push(`
-  <url>
-    <loc>${escapeXml(
-      `${siteUrl}/${encodeURIComponent(post.slug)}`
-    )}</loc>
-    <lastmod>${escapeXml(
-      formatSitemapDate(post.date)
-    )}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>`);
-  }
-
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset
-  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
->
-${urls.join("\n")}
-</urlset>
-`;
-
-  fs.writeFileSync(
-    SITEMAP_PATH,
-    sitemap,
-    "utf8"
-  );
-
-  console.log(
-    `Built sitemap.xml with ${posts.length + 2} URLs.`
-  );
-}
-
-/* =========================================================
-   BUILD
-========================================================= */
+/* =========================================
+   MAIN BUILD
+   ========================================= */
 
 function build() {
-  console.log("Starting Real Insight build...");
-
-  if (!fs.existsSync(TEMPLATE_PATH)) {
-    throw new Error("post.html template not found.");
-  }
-
-  if (!fs.existsSync(INDEX_PATH)) {
-    throw new Error("index.html not found.");
-  }
-
-  const template = fs.readFileSync(
-    TEMPLATE_PATH,
-    "utf8"
-  );
-
-  const posts = readPosts();
 
   console.log(
-    `Found ${posts.length} published post(s).`
+    "Starting Real Insight build..."
   );
 
-  /*
-   * Build individual post pages.
-   */
+
+  if (
+    !fs.existsSync(
+      TEMPLATE_PATH
+    )
+  ) {
+
+    throw new Error(
+      "post.html was not found."
+    );
+
+  }
+
+
+  if (
+    !fs.existsSync(
+      INDEX_PATH
+    )
+  ) {
+
+    throw new Error(
+      "index.html was not found."
+    );
+
+  }
+
+
+  const template =
+    fs.readFileSync(
+      TEMPLATE_PATH,
+      "utf8"
+    );
+
+
+  const posts =
+    readPosts();
+
+
+  console.log(
+    `Found ${posts.length} post(s).`
+  );
+
+
   buildPosts(
     posts,
     template
   );
 
-  /*
-   * Build homepage listings.
-   */
-  buildHomepage(posts);
 
-  /*
-   * Build category page listings.
-   */
-  buildCategories(posts);
+  buildHomepage(
+    posts
+  );
 
-  /*
-   * Build sitemap.xml.
-   */
-  buildSitemap(posts);
 
-  console.log("Real Insight build completed.");
+  console.log(
+    "Real Insight build completed successfully."
+  );
+
 }
 
-/* =========================================================
-   RUN
-========================================================= */
+
+/* =========================================
+   RUN BUILD
+   ========================================= */
 
 try {
+
   build();
+
 } catch (error) {
-  console.error("Build failed:");
-  console.error(error);
+
+  console.error(
+    "BUILD FAILED:"
+  );
+
+  console.error(
+    error
+  );
 
   process.exit(1);
+
 }
