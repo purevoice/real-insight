@@ -3,23 +3,27 @@ const path = require("path");
 
 const ROOT = __dirname;
 
-const POSTS_DIR =
-  path.join(
-    ROOT,
-    "posts"
-  );
+const TEMPLATE_PATH = path.join(
+  ROOT,
+  "post.html"
+);
 
-const TEMPLATE_PATH =
-  path.join(
-    ROOT,
-    "post.html"
-  );
+const INDEX_PATH = path.join(
+  ROOT,
+  "index.html"
+);
 
-const INDEX_PATH =
-  path.join(
-    ROOT,
-    "index.html"
-  );
+
+/* =========================================
+   FILES THAT ARE NOT POSTS
+   ========================================= */
+
+const EXCLUDED_FILES = new Set([
+  "index.html",
+  "post.html",
+  "add-post.html",
+  "categories.html"
+]);
 
 
 /* =========================================
@@ -29,26 +33,11 @@ const INDEX_PATH =
 function escapeHtml(value) {
 
   return String(value || "")
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 }
 
@@ -61,7 +50,7 @@ function escapeAttribute(value) {
 
 
 /* =========================================
-   POST DATA
+   POST DATA SCRIPT
    ========================================= */
 
 function createPostDataScript(post) {
@@ -94,18 +83,9 @@ function createPostDataScript(post) {
 
   const json =
     JSON.stringify(data)
-      .replace(
-        /</g,
-        "\\u003c"
-      )
-      .replace(
-        />/g,
-        "\\u003e"
-      )
-      .replace(
-        /&/g,
-        "\\u0026"
-      );
+      .replace(/</g, "\\u003c")
+      .replace(/>/g, "\\u003e")
+      .replace(/&/g, "\\u0026");
 
 
   return `
@@ -210,40 +190,49 @@ function extractPostContent(
 
 
 /* =========================================
-   READ POSTS
+   CHECK IF FILE IS A POST
    ========================================= */
 
-function readPosts() {
+function isPostFile(filename) {
 
   if (
-    !fs.existsSync(
-      POSTS_DIR
-    )
+    !filename
+      .toLowerCase()
+      .endsWith(".html")
   ) {
 
-    fs.mkdirSync(
-      POSTS_DIR,
-      {
-        recursive: true
-      }
-    );
+    return false;
 
   }
 
 
+  if (
+    EXCLUDED_FILES.has(
+      filename.toLowerCase()
+    )
+  ) {
+
+    return false;
+
+  }
+
+
+  return true;
+
+}
+
+
+/* =========================================
+   READ POSTS FROM ROOT
+   ========================================= */
+
+function readPosts() {
+
   const files =
     fs.readdirSync(
-      POSTS_DIR
+      ROOT
     )
-    .filter(function(filename) {
-
-      return (
-        filename
-          .toLowerCase()
-          .endsWith(".html")
-      );
-
-    });
+    .filter(isPostFile);
 
 
   const posts = [];
@@ -255,7 +244,7 @@ function readPosts() {
 
     const filePath =
       path.join(
-        POSTS_DIR,
+        ROOT,
         filename
       );
 
@@ -265,6 +254,29 @@ function readPosts() {
         filePath,
         "utf8"
       );
+
+
+    /*
+     * Only HTML files containing our
+     * post metadata are considered posts.
+     *
+     * This prevents unrelated HTML files
+     * in the root directory from being
+     * treated as posts.
+     */
+
+    if (
+      !html.includes(
+        'id="realInsightPostData"'
+      ) &&
+      !html.includes(
+        "id='realInsightPostData'"
+      )
+    ) {
+
+      continue;
+
+    }
 
 
     try {
@@ -292,6 +304,15 @@ function readPosts() {
           )
         )
         .trim();
+
+
+      if (!slug) {
+
+        throw new Error(
+          `${filename} has no slug.`
+        );
+
+      }
 
 
       posts.push({
@@ -442,9 +463,7 @@ function renderRelatedPosts(
 
         return (
           item.slug !== post.slug &&
-          !related.some(function(
-            existing
-          ) {
+          !related.some(function(existing) {
 
             return (
               existing.slug ===
@@ -663,8 +682,25 @@ function renderPost(
   template
 ) {
 
+  /*
+   * Netlify provides the site URL through
+   * the URL environment variable.
+   *
+   * NETLIFY_SITE_URL can also be supplied
+   * manually if you want to override it.
+   */
+
+  const siteUrl =
+    (
+      process.env.NETLIFY_SITE_URL ||
+      process.env.URL ||
+      "https://realinsight.netlify.app"
+    )
+    .replace(/\/+$/, "");
+
+
   const canonical =
-    `https://realinsight.netlify.app/${post.slug}`;
+    `${siteUrl}/${post.slug}`;
 
 
   let html =
@@ -1031,9 +1067,20 @@ function buildPosts(
       );
 
 
+    /*
+     * IMPORTANT:
+     *
+     * Posts are written directly into
+     * the repository root.
+     *
+     * Example:
+     *
+     * /iran-fires-on-its-gulf-neighbors.html
+     */
+
     const filePath =
       path.join(
-        POSTS_DIR,
+        ROOT,
         `${post.slug}.html`
       );
 
@@ -1124,6 +1171,10 @@ function build() {
 
 }
 
+
+/* =========================================
+   RUN BUILD
+   ========================================= */
 
 try {
 
