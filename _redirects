@@ -1,0 +1,3 @@
+# Clean URLs for individual posts.
+# Netlify serves the generic post template for any first-level path.
+/*    /post.html    200

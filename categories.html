@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Categories | Real Insight</title>
+  <meta name="description" content="Browse Real Insight posts by category.">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="nav-container">
+    <a href="/" class="logo">Real Insight<span class="logo-dot"></span></a>
+    <nav class="nav-links" id="navLinks">
+      <a href="/">Home</a>
+      <a href="/categories" class="active">Categories</a>
+      <a href="/add-post">Add New Post</a>
+    </nav>
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <section class="home-container">
+    <div class="page-intro">
+      <h1>Categories</h1>
+      <p>Browse published posts by category.</p>
+    </div>
+    <div class="category-list" id="categoryList"></div>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; <span id="currentYear"></span> <strong>Real Insight</strong>. All rights reserved.</p>
+</footer>
+
+<script src="/app.js"></script>
+<script src="/categories.js"></script>
+<script>
+  // Category loading will be connected to the Apps Script API later.
+</script>
+</body>
+</html>

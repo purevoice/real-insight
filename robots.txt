@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://realinsight.netlify.app/sitemap.xml

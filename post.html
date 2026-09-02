@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>{{TITLE}} | Real Insight</title>
+
+  <meta
+    name="description"
+    content="{{EXCERPT}}"
+  >
+
+  <link
+    rel="canonical"
+    href="{{CANONICAL}}"
+  >
+
+  {{POST_DATA}}
+
+  <link
+    rel="stylesheet"
+    href="/style.css"
+  >
+
+</head>
+
+
+<body>
+
+
+<header>
+
+  <div class="nav-container">
+
+    <a
+      href="/"
+      class="logo"
+    >
+      Real Insight<span class="logo-dot"></span>
+    </a>
+
+
+    <nav
+      class="nav-links"
+      id="navLinks"
+    >
+
+      <a href="/">
+        Home
+      </a>
+
+      <a href="/categories">
+        Categories
+      </a>
+
+      <a href="/add-post">
+        Add New Post
+      </a>
+
+    </nav>
+
+
+    <button
+      class="menu-toggle"
+      id="menuToggle"
+      aria-label="Toggle navigation"
+      aria-expanded="false"
+    >
+
+      <span></span>
+      <span></span>
+      <span></span>
+
+    </button>
+
+  </div>
+
+</header>
+
+
+
+<main>
+
+  <div class="layout">
+
+
+    <section class="main-content">
+
+
+      <div class="breadcrumb">
+
+        <a href="/">
+          Home
+        </a>
+
+        <span>/</span>
+
+        <a href="/categories">
+          {{CATEGORY}}
+        </a>
+
+        <span>/</span>
+
+        <span>
+          {{TITLE}}
+        </span>
+
+      </div>
+
+
+
+      <article class="post">
+
+
+        <header class="post-header">
+
+          <div class="post-category">
+            {{CATEGORY}}
+          </div>
+
+
+          <h1>
+            {{TITLE}}
+          </h1>
+
+
+          <div class="post-meta">
+
+            <span>
+              {{DATE}}
+            </span>
+
+            <span class="dot"></span>
+
+            <span>
+              {{READING_TIME}}
+            </span>
+
+          </div>
+
+        </header>
+
+
+
+        <div class="post-content">
+
+          <!-- REAL_INSIGHT_CONTENT_START -->
+
+          {{CONTENT}}
+
+          <!-- REAL_INSIGHT_CONTENT_END -->
+
+        </div>
+
+
+
+        <div class="post-tags">
+
+          {{TAGS}}
+
+        </div>
+
+
+
+        <div class="post-share">
+
+          <span>
+            Share this post
+          </span>
+
+
+          <button
+            type="button"
+            onclick="sharePost('twitter')"
+          >
+            X
+          </button>
+
+
+          <button
+            type="button"
+            onclick="sharePost('facebook')"
+          >
+            Facebook
+          </button>
+
+
+          <button
+            type="button"
+            onclick="sharePost('linkedin')"
+          >
+            LinkedIn
+          </button>
+
+
+          <button
+            type="button"
+            onclick="sharePost('copy')"
+          >
+            Copy link
+          </button>
+
+        </div>
+
+
+
+      </article>
+
+
+
+      <section class="related-posts">
+
+        <div class="section-heading">
+
+          <h2>
+            Related Posts
+          </h2>
+
+        </div>
+
+
+        <div class="related-grid">
+
+          {{RELATED_POSTS}}
+
+        </div>
+
+      </section>
+
+
+
+      <nav
+        class="post-navigation"
+        aria-label="Post navigation"
+      >
+
+        {{POST_NAVIGATION}}
+
+      </nav>
+
+
+    </section>
+
+
+
+    <aside class="sidebar">
+
+
+      <div class="widget">
+
+        <h3 class="widget-title">
+          Recent Posts
+        </h3>
+
+
+        <ul class="recent-list">
+
+          {{RECENT_POSTS}}
+
+        </ul>
+
+      </div>
+
+
+    </aside>
+
+
+  </div>
+
+</main>
+
+
+
+<footer>
+
+  <p>
+
+    &copy;
+
+    <span id="currentYear"></span>
+
+    <strong>
+      Real Insight
+    </strong>.
+
+    All rights reserved.
+
+  </p>
+
+</footer>
+
+
+
+<script src="/app.js"></script>
+<script src="/post.js"></script>
+
+
+</body>
+
+</html>
