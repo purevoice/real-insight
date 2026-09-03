@@ -556,10 +556,13 @@ function createPostDataScript(
       post.category,
 
     date:
-      post.date,
+  post.date,
 
-    readingTime:
-      post.readingTime,
+publishedAt:
+  post.publishedAt,
+
+readingTime:
+  post.readingTime,
 
     excerpt:
       post.excerpt,
@@ -1117,7 +1120,10 @@ exports.handler =
       category,
 
       date:
-        getPublishDate(),
+  getPublishDate(),
+
+publishedAt:
+  new Date().toISOString(),
 
       readingTime:
         calculateReadingTime(
