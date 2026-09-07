@@ -1119,6 +1119,16 @@ function buildHomepage(
       .join("\n");
 
 
+  /*
+   * Generate homepage category sidebar.
+   */
+
+  const categorySidebar =
+    renderCategorySidebar(
+      posts
+    );
+
+
   html =
     replaceBetweenMarkers(
       html,
@@ -1140,6 +1150,17 @@ function buildHomepage(
       "<!-- RECENT_POSTS_END -->",
 
       recentPosts
+    );
+
+
+  /*
+   * Replace homepage category sidebar.
+   */
+
+  html =
+    html.replaceAll(
+      "{{CATEGORY_SIDEBAR}}",
+      categorySidebar
     );
 
 
