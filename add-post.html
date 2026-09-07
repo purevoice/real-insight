@@ -2,83 +2,137 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Add New Post | Real Insight</title>
 
   <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
+    name="robots"
+    content="noindex,nofollow"
   >
 
-  <title>Add Post | Real Insight</title>
-
-  <link
-    rel="stylesheet"
-    href="/style.css"
-  >
+  <link rel="stylesheet" href="/style.css">
 </head>
 
 <body>
 
-  <main class="admin-page">
+<header>
+  <div class="nav-container">
 
-    <section class="admin-container">
+    <a href="/" class="logo">
+      Real Insight<span class="logo-dot"></span>
+    </a>
 
-      <div class="admin-header">
-        <h1>Add New Post</h1>
-        <p>Create and publish a new Real Insight article.</p>
+    <nav class="nav-links" id="navLinks">
+
+      <a href="/">
+        Home
+      </a>
+
+      <a href="/categories">
+        Categories
+      </a>
+
+      <a href="/add-post" class="active">
+        Add New Post
+      </a>
+
+    </nav>
+
+    <button
+      class="menu-toggle"
+      id="menuToggle"
+      aria-label="Toggle navigation"
+      aria-expanded="false"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+  </div>
+</header>
+
+
+<main>
+
+  <section class="form-container">
+
+    <div class="page-intro">
+
+      <h1>
+        Add New Post
+      </h1>
+
+      <p>
+        Write, format and publish a new article.
+      </p>
+
+    </div>
+
+
+    <form
+      id="postForm"
+      class="post-form"
+      novalidate
+    >
+
+      <!-- TITLE -->
+
+      <div class="form-group">
+
+        <label for="title">
+          Title
+        </label>
+
+        <input
+          id="title"
+          name="title"
+          type="text"
+          autocomplete="off"
+          required
+          placeholder="Enter your post title"
+        >
+
       </div>
 
 
-      <form id="postForm">
+      <!-- SLUG -->
 
-        <!-- =====================================
-             TITLE
-        ====================================== -->
+      <div class="form-group">
 
-        <div class="form-group">
+        <label>
+          URL
+        </label>
 
-          <label for="title">
-            Post Title
-          </label>
+        <div class="slug-preview">
 
-          <input
-            type="text"
-            id="title"
-            name="title"
-            placeholder="Enter post title"
-            autocomplete="off"
-            required
-          >
+          <span>
+            https://realinsight.netlify.app/
+          </span>
+
+          <strong id="slugPreview">
+            your-post-title
+          </strong>
 
         </div>
 
+        <input
+          id="slug"
+          name="slug"
+          type="hidden"
+        >
 
-        <!-- =====================================
-             SLUG
-        ====================================== -->
+        <small class="editor-help">
+          The URL is generated automatically from the title.
+        </small>
 
-        <div class="form-group">
-
-          <label for="slug">
-            URL Slug
-          </label>
-
-          <input
-            type="text"
-            id="slug"
-            name="slug"
-            readonly
-          >
-
-          <div class="slug-preview">
-            /<span id="slugPreview">your-post-title</span>
-          </div>
-
-        </div>
+      </div>
 
 
-        <!-- =====================================
-             CATEGORY
-        ====================================== -->
+      <!-- CATEGORY + READING TIME -->
+
+      <div class="form-row">
 
         <div class="form-group">
 
@@ -87,485 +141,500 @@
           </label>
 
           <input
-            type="text"
             id="category"
             name="category"
-            placeholder="e.g. Nigeria, Politics, Business"
+            type="text"
             required
+            placeholder="News"
           >
 
         </div>
 
-
-        <!-- =====================================
-             READING TIME
-        ====================================== -->
 
         <div class="form-group">
 
           <label for="readingTime">
-            Reading Time
+            Reading time
           </label>
 
           <input
-            type="text"
             id="readingTime"
             name="readingTime"
-            placeholder="Leave blank to calculate automatically"
+            type="text"
+            placeholder="5 min read"
           >
 
         </div>
 
-
-        <!-- =====================================
-             EXCERPT
-        ====================================== -->
-
-        <div class="form-group">
-
-          <label for="excerpt">
-            Excerpt
-          </label>
-
-          <textarea
-            id="excerpt"
-            name="excerpt"
-            rows="4"
-            placeholder="Write a short description of the article"
-            required
-          ></textarea>
-
-        </div>
+      </div>
 
 
-        <!-- =====================================
-             CONTENT EDITOR
-        ====================================== -->
+      <!-- EXCERPT -->
 
-        <div class="form-group">
+      <div class="form-group">
 
-          <label for="contentEditor">
-            Post Content
-          </label>
+        <label for="excerpt">
+          Excerpt
+        </label>
+
+        <textarea
+          id="excerpt"
+          name="excerpt"
+          rows="4"
+          required
+          placeholder="Write a short description of the article..."
+        ></textarea>
+
+      </div>
 
 
-          <div class="editor-wrapper">
+      <!-- CONTENT -->
+
+      <div class="form-group">
+
+        <label for="contentEditor">
+          Post content
+        </label>
 
 
-            <!-- TOOLBAR -->
+        <div class="editor-wrapper">
 
-            <div
-              class="editor-toolbar"
-              role="toolbar"
-              aria-label="Post formatting tools"
+
+          <!-- EDITOR TOOLBAR -->
+
+          <div
+            class="editor-toolbar"
+            role="toolbar"
+            aria-label="Post formatting"
+          >
+
+            <!-- TEXT STYLE -->
+
+            <select
+              id="formatBlock"
+              aria-label="Text style"
+              title="Text style"
             >
 
+              <option value="p">
+                Paragraph
+              </option>
 
-              <!-- BLOCK FORMAT -->
+              <option value="h1">
+                Heading 1
+              </option>
 
-              <select
-                id="formatBlock"
-                aria-label="Text format"
-                title="Text format"
-              >
+              <option value="h2">
+                Heading 2
+              </option>
 
-                <option value="p">
-                  Paragraph
-                </option>
+              <option value="h3">
+                Heading 3
+              </option>
 
-                <option value="h1">
-                  Heading 1
-                </option>
+              <option value="h4">
+                Heading 4
+              </option>
 
-                <option value="h2">
-                  Heading 2
-                </option>
+              <option value="h5">
+                Heading 5
+              </option>
 
-                <option value="h3">
-                  Heading 3
-                </option>
+              <option value="h6">
+                Heading 6
+              </option>
 
-                <option value="h4">
-                  Heading 4
-                </option>
+            </select>
 
-                <option value="h5">
-                  Heading 5
-                </option>
 
-                <option value="h6">
-                  Heading 6
-                </option>
+            <span class="toolbar-separator"></span>
 
-              </select>
 
+            <!-- TEXT FORMATTING -->
 
-              <span class="toolbar-separator"></span>
+            <button
+              type="button"
+              data-command="bold"
+              title="Bold"
+              aria-label="Bold"
+            >
+              <strong>B</strong>
+            </button>
 
 
-              <!-- TEXT FORMATTING -->
+            <button
+              type="button"
+              data-command="italic"
+              title="Italic"
+              aria-label="Italic"
+            >
+              <em>I</em>
+            </button>
 
-              <button
-                type="button"
-                data-command="bold"
-                title="Bold"
-                aria-label="Bold"
-              >
-                <strong>B</strong>
-              </button>
 
+            <button
+              type="button"
+              data-command="underline"
+              title="Underline"
+              aria-label="Underline"
+            >
+              <u>U</u>
+            </button>
 
-              <button
-                type="button"
-                data-command="italic"
-                title="Italic"
-                aria-label="Italic"
-              >
-                <em>I</em>
-              </button>
 
+            <button
+              type="button"
+              data-command="strikeThrough"
+              title="Strikethrough"
+              aria-label="Strikethrough"
+            >
+              <s>S</s>
+            </button>
 
-              <button
-                type="button"
-                data-command="underline"
-                title="Underline"
-                aria-label="Underline"
-              >
-                <u>U</u>
-              </button>
 
+            <span class="toolbar-separator"></span>
 
-              <button
-                type="button"
-                data-command="strikeThrough"
-                title="Strikethrough"
-                aria-label="Strikethrough"
-              >
-                <s>S</s>
-              </button>
 
+            <!-- LISTS -->
 
-              <span class="toolbar-separator"></span>
+            <button
+              type="button"
+              data-command="insertUnorderedList"
+              title="Bulleted list"
+              aria-label="Bulleted list"
+            >
+              • List
+            </button>
 
 
-              <!-- LISTS -->
+            <button
+              type="button"
+              data-command="insertOrderedList"
+              title="Numbered list"
+              aria-label="Numbered list"
+            >
+              1. List
+            </button>
 
-              <button
-                type="button"
-                data-command="insertUnorderedList"
-                title="Bulleted list"
-                aria-label="Bulleted list"
-              >
-                ☷
-              </button>
 
+            <span class="toolbar-separator"></span>
 
-              <button
-                type="button"
-                data-command="insertOrderedList"
-                title="Numbered list"
-                aria-label="Numbered list"
-              >
-                ≡
-              </button>
 
+            <!-- ALIGNMENT -->
 
-              <span class="toolbar-separator"></span>
+            <button
+              type="button"
+              data-command="justifyLeft"
+              title="Align left"
+              aria-label="Align left"
+            >
+              Left
+            </button>
 
 
-              <!-- ALIGNMENT -->
+            <button
+              type="button"
+              data-command="justifyCenter"
+              title="Align center"
+              aria-label="Align center"
+            >
+              Center
+            </button>
 
-              <button
-                type="button"
-                data-command="justifyLeft"
-                title="Align left"
-                aria-label="Align left"
-              >
-                ≡
-              </button>
 
+            <button
+              type="button"
+              data-command="justifyRight"
+              title="Align right"
+              aria-label="Align right"
+            >
+              Right
+            </button>
 
-              <button
-                type="button"
-                data-command="justifyCenter"
-                title="Align center"
-                aria-label="Align center"
-              >
-                ≡
-              </button>
 
+            <span class="toolbar-separator"></span>
 
-              <button
-                type="button"
-                data-command="justifyRight"
-                title="Align right"
-                aria-label="Align right"
-              >
-                ≡
-              </button>
 
+            <!-- BLOCKQUOTE -->
 
-              <span class="toolbar-separator"></span>
+            <button
+              type="button"
+              id="blockquoteButton"
+              title="Blockquote"
+              aria-label="Blockquote"
+            >
+              Quote
+            </button>
 
 
-              <!-- BLOCKQUOTE -->
+            <!-- LINK -->
 
-              <button
-                type="button"
-                id="blockquoteButton"
-                title="Blockquote"
-                aria-label="Blockquote"
-              >
-                “
-              </button>
+            <button
+              type="button"
+              id="linkButton"
+              title="Insert link"
+              aria-label="Insert link"
+            >
+              Link
+            </button>
 
 
-              <!-- LINK -->
+            <button
+              type="button"
+              data-command="unlink"
+              title="Remove link"
+              aria-label="Remove link"
+            >
+              Unlink
+            </button>
 
-              <button
-                type="button"
-                id="linkButton"
-                title="Insert link"
-                aria-label="Insert link"
-              >
-                🔗
-              </button>
 
+            <!-- IMAGE -->
 
-              <button
-                type="button"
-                data-command="unlink"
-                title="Remove link"
-                aria-label="Remove link"
-              >
-                🔗
-              </button>
+            <button
+              type="button"
+              id="imageButton"
+              title="Insert image"
+              aria-label="Insert image"
+            >
+              Image
+            </button>
 
 
-              <!-- IMAGE -->
+            <!-- HORIZONTAL RULE -->
 
-              <button
-                type="button"
-                id="imageButton"
-                title="Insert image"
-                aria-label="Insert image"
-              >
-                🖼
-              </button>
+            <button
+              type="button"
+              id="horizontalRuleButton"
+              title="Horizontal line"
+              aria-label="Horizontal line"
+            >
+              HR
+            </button>
 
 
-              <!-- HORIZONTAL RULE -->
+            <span class="toolbar-separator"></span>
 
-              <button
-                type="button"
-                id="horizontalRuleButton"
-                title="Horizontal rule"
-                aria-label="Horizontal rule"
-              >
-                ―
-              </button>
 
+            <!-- UNDO / REDO -->
 
-              <span class="toolbar-separator"></span>
+            <button
+              type="button"
+              id="undoButton"
+              title="Undo"
+              aria-label="Undo"
+            >
+              Undo
+            </button>
 
 
-              <!-- UNDO / REDO -->
+            <button
+              type="button"
+              id="redoButton"
+              title="Redo"
+              aria-label="Redo"
+            >
+              Redo
+            </button>
 
-              <button
-                type="button"
-                id="undoButton"
-                title="Undo"
-                aria-label="Undo"
-              >
-                ↶
-              </button>
 
+            <!-- CLEAR FORMATTING -->
 
-              <button
-                type="button"
-                id="redoButton"
-                title="Redo"
-                aria-label="Redo"
-              >
-                ↷
-              </button>
-
-
-              <!-- CLEAR FORMATTING -->
-
-              <button
-                type="button"
-                data-command="removeFormat"
-                title="Clear formatting"
-                aria-label="Clear formatting"
-              >
-                Tx
-              </button>
-
-            </div>
-
-
-            <!-- EDITABLE CONTENT -->
-
-            <div
-              id="contentEditor"
-              contenteditable="true"
-              role="textbox"
-              aria-multiline="true"
-              spellcheck="true"
-            ></div>
-
-
-            <!-- HIDDEN CONTENT FIELD -->
-
-            <textarea
-              id="content"
-              name="content"
-              hidden
-            ></textarea>
+            <button
+              type="button"
+              data-command="removeFormat"
+              title="Clear formatting"
+              aria-label="Clear formatting"
+            >
+              Clear
+            </button>
 
           </div>
 
-        </div>
 
+          <!-- EDITOR -->
 
-        <!-- =====================================
-             TAGS
-        ====================================== -->
-
-        <div class="form-group">
-
-          <label for="tags">
-            Tags
-          </label>
-
-          <input
-            type="text"
-            id="tags"
-            name="tags"
-            placeholder="Separate tags with commas"
-          >
+          <div
+            id="contentEditor"
+            class="rich-editor"
+            contenteditable="true"
+            role="textbox"
+            aria-multiline="true"
+            data-placeholder="Start writing your article..."
+            spellcheck="true"
+          ></div>
 
         </div>
 
 
-        <!-- =====================================
-             ACCESS CODE
-        ====================================== -->
+        <!-- HIDDEN CONTENT -->
 
-        <div class="form-group">
-
-          <label for="accessCode">
-            Access Code
-          </label>
-
-          <input
-            type="password"
-            id="accessCode"
-            name="accessCode"
-            placeholder="Enter publishing access code"
-            autocomplete="off"
-            required
-          >
-
-        </div>
+        <textarea
+          id="content"
+          name="content"
+          hidden
+        ></textarea>
 
 
-        <!-- =====================================
-             MESSAGE
-        ====================================== -->
+        <small class="editor-help">
+          Use the toolbar to format headings, text, lists, links, images and quotes.
+        </small>
 
-        <div
-          id="formMessage"
-          class="form-message"
-          aria-live="polite"
-        ></div>
+      </div>
 
 
-        <!-- =====================================
-             PUBLISH BUTTON
-        ====================================== -->
+      <!-- TAGS -->
 
-        <button
-          type="submit"
-          id="publishButton"
+      <div class="form-group">
+
+        <label for="tags">
+          Tags
+        </label>
+
+        <input
+          id="tags"
+          name="tags"
+          type="text"
+          placeholder="news, world, politics"
         >
-          Publish Post
-        </button>
 
-      </form>
+        <small class="editor-help">
+          Separate tags with commas.
+        </small>
 
-    </section>
-
-  </main>
+      </div>
 
 
-  <!-- =========================================
-       IMAGE INSERT DIALOG
-  ========================================== -->
+      <!-- ACCESS CODE -->
 
-  <dialog
-    id="imageDialog"
-    class="editor-dialog"
-  >
+      <div class="form-group">
 
-    <form method="dialog">
+        <label for="accessCode">
+          Access code
+        </label>
 
-      <h2>
-        Insert Image
-      </h2>
+        <input
+          id="accessCode"
+          name="accessCode"
+          type="password"
+          required
+          autocomplete="off"
+          placeholder="Enter publishing access code"
+        >
 
+      </div>
+
+
+      <div
+        id="formMessage"
+        class="form-message"
+        role="status"
+        aria-live="polite"
+      ></div>
+
+
+      <button
+        type="submit"
+        class="primary-button"
+        id="publishButton"
+      >
+        Publish Post
+      </button>
+
+    </form>
+
+  </section>
+
+</main>
+
+
+<footer>
+
+  <p>
+    &copy;
+    <span id="currentYear"></span>
+    <strong>Real Insight</strong>.
+    All rights reserved.
+  </p>
+
+</footer>
+
+
+<!-- IMAGE DIALOG -->
+
+<dialog
+  id="imageDialog"
+  class="editor-dialog"
+>
+
+  <form method="dialog">
+
+    <h2>
+      Insert Image
+    </h2>
+
+
+    <div class="form-group">
 
       <label for="imageUrl">
         Image URL
       </label>
 
       <input
-        type="url"
         id="imageUrl"
+        type="url"
         placeholder="https://example.com/image.jpg"
         autocomplete="off"
       >
 
+    </div>
+
+
+    <div class="form-group">
 
       <label for="imageAlt">
-        Alt Text
+        Alt text
       </label>
 
       <input
-        type="text"
         id="imageAlt"
+        type="text"
         placeholder="Describe the image"
         autocomplete="off"
       >
 
+      <small class="editor-help">
+        Describe what the image shows.
+      </small>
 
-      <div class="editor-dialog-actions">
-
-        <button
-          type="button"
-          id="cancelImageButton"
-        >
-          Cancel
-        </button>
+    </div>
 
 
-        <button
-          type="button"
-          id="insertImageButton"
-        >
-          Insert Image
-        </button>
+    <div class="editor-dialog-actions">
 
-      </div>
+      <button
+        type="button"
+        id="cancelImageButton"
+      >
+        Cancel
+      </button>
 
-    </form>
+      <button
+        type="button"
+        id="insertImageButton"
+      >
+        Insert Image
+      </button>
 
-  </dialog>
+    </div>
+
+  </form>
+
+</dialog>
 
 
-  <script src="/app.js"></script>
-  <script src="/add-post.js"></script>
+<script src="/app.js"></script>
+<script src="/add-post.js"></script>
 
 </body>
 </html>
