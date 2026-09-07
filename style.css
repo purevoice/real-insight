@@ -975,49 +975,113 @@ footer strong {
   transform: translateY(-2px);
 }
 
+.category-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 
 /* =========================================
-   RICH TEXT EDITOR
+   POST EDITOR
    ========================================= */
 
 .editor-wrapper {
+  width: 100%;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fff;
   overflow: hidden;
 }
 
+
+/* =========================================
+   EDITOR TOOLBAR
+   ========================================= */
+
 .editor-toolbar {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
-  padding: 10px;
-  background: #FAFAF9;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 8px;
+  background: #F8F8F7;
   border-bottom: 1px solid var(--border);
 }
 
-.editor-toolbar button,
+
+/* =========================================
+   EDITOR FORMAT SELECTOR
+   ========================================= */
+
 .editor-toolbar select {
-  height: 36px;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 145px;
+  height: 38px;
+  padding: 0 10px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: 6px;
   background: #fff;
   color: var(--light-black);
   font: inherit;
+  font-size: 14px;
   cursor: pointer;
 }
 
-.editor-toolbar button {
-  min-width: 36px;
-  padding: 0 9px;
-  font-weight: 600;
+.editor-toolbar select:hover {
+  border-color: #A8A29E;
 }
 
-.editor-toolbar button:hover,
-.editor-toolbar select:hover {
+.editor-toolbar select:focus {
+  outline: none;
   border-color: var(--warm-yellow);
-  background: var(--warm-yellow-soft);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, .1);
+}
+
+
+/* =========================================
+   EDITOR TOOLBAR BUTTONS
+   ========================================= */
+
+.editor-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--light-black);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background .15s ease,
+    border-color .15s ease,
+    color .15s ease,
+    box-shadow .15s ease;
+}
+
+.editor-toolbar button:hover {
+  background: #F5F5F4;
+  border-color: #A8A29E;
+}
+
+.editor-toolbar button:active {
+  background: #E7E5E4;
+}
+
+.editor-toolbar button:focus-visible {
+  outline: 2px solid var(--warm-yellow);
+  outline-offset: 1px;
 }
 
 .editor-toolbar button.active {
@@ -1025,104 +1089,325 @@ footer strong {
   border-color: var(--warm-yellow);
 }
 
+
+/* =========================================
+   TEXT FORMATTING BUTTONS
+   ========================================= */
+
+.editor-toolbar button[data-command="bold"],
+.editor-toolbar button[data-command="italic"],
+.editor-toolbar button[data-command="underline"],
+.editor-toolbar button[data-command="strikeThrough"] {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.editor-toolbar button[data-command="italic"] {
+  font-style: italic;
+}
+
+.editor-toolbar button[data-command="underline"] {
+  text-decoration: underline;
+}
+
+.editor-toolbar button[data-command="strikeThrough"] {
+  text-decoration: line-through;
+}
+
+
+/* =========================================
+   TOOLBAR SEPARATORS
+   ========================================= */
+
 .editor-toolbar .toolbar-separator {
+  flex: 0 0 1px;
   width: 1px;
-  height: 24px;
+  height: 25px;
+  margin: 0 4px;
   background: var(--border);
-  margin: 0 3px;
 }
 
-.rich-editor {
-  min-height: 420px;
-  padding: 20px;
-  outline: none;
-  font-size: 1rem;
-  line-height: 1.8;
+
+/* =========================================
+   RICH TEXT EDITOR
+   ========================================= */
+
+#contentEditor {
+  width: 100%;
+  min-height: 500px;
+  padding: 24px;
+  border: 0;
+  background: #fff;
   color: var(--light-black-soft);
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.8;
+  text-align: left;
+  outline: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  white-space: normal;
 }
 
-.rich-editor:focus {
-  box-shadow: inset 0 0 0 2px var(--warm-yellow-soft);
-}
 
-.rich-editor:empty::before {
+/* =========================================
+   EDITOR PLACEHOLDER
+   ========================================= */
+
+#contentEditor:empty::before {
   content: attr(data-placeholder);
   color: #A8A29E;
   pointer-events: none;
 }
 
-.rich-editor p {
+
+/* =========================================
+   EDITOR PARAGRAPHS
+   ========================================= */
+
+#contentEditor p {
   margin: 0 0 1.25rem;
+  padding: 0;
 }
 
-.rich-editor p:last-child {
+#contentEditor p:last-child {
   margin-bottom: 0;
 }
 
-.rich-editor h2 {
-  margin: 2rem 0 1rem;
-  font-size: 1.6rem;
+
+/* =========================================
+   EDITOR HEADINGS
+   ========================================= */
+
+#contentEditor h1,
+#contentEditor h2,
+#contentEditor h3,
+#contentEditor h4,
+#contentEditor h5,
+#contentEditor h6 {
+  margin: 1.8rem 0 .75rem;
+  padding: 0;
   color: var(--light-black);
+  font-weight: 700;
+  line-height: 1.25;
 }
 
-.rich-editor h3 {
-  margin: 1.75rem 0 .75rem;
-  font-size: 1.3rem;
-  color: var(--light-black);
+#contentEditor h1:first-child,
+#contentEditor h2:first-child,
+#contentEditor h3:first-child,
+#contentEditor h4:first-child,
+#contentEditor h5:first-child,
+#contentEditor h6:first-child {
+  margin-top: 0;
 }
 
-.rich-editor h4 {
-  margin: 1.5rem 0 .75rem;
-  font-size: 1.1rem;
-  color: var(--light-black);
+#contentEditor h1 {
+  font-size: 2rem;
 }
 
-.rich-editor ul,
-.rich-editor ol {
-  margin-bottom: 1.25rem;
-  padding-left: 1.75rem;
+#contentEditor h2 {
+  font-size: 1.65rem;
 }
 
-.rich-editor li {
-  margin-bottom: .4rem;
+#contentEditor h3 {
+  font-size: 1.4rem;
 }
 
-.rich-editor blockquote {
-  margin: 1.5rem 0;
-  padding: 16px 20px;
-  background: var(--warm-yellow-soft);
-  border-left: 4px solid var(--warm-yellow);
-  border-radius: 0 10px 10px 0;
+#contentEditor h4 {
+  font-size: 1.2rem;
 }
 
-.rich-editor a {
-  color: #B45309;
-  text-decoration: underline;
+#contentEditor h5 {
+  font-size: 1.05rem;
 }
 
-.rich-editor strong {
+#contentEditor h6 {
+  font-size: .95rem;
+}
+
+
+/* =========================================
+   EDITOR TEXT FORMATTING
+   ========================================= */
+
+#contentEditor strong,
+#contentEditor b {
   color: var(--light-black);
   font-weight: 700;
 }
 
-.rich-editor em {
+#contentEditor em,
+#contentEditor i {
   font-style: italic;
 }
 
-.rich-editor u {
+#contentEditor u {
   text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
-.rich-editor s {
+#contentEditor s,
+#contentEditor strike {
   text-decoration: line-through;
 }
 
-.editor-help {
-  display: block;
-  margin-top: 8px;
-  color: var(--light-black-soft);
-  font-size: .8rem;
+
+/* =========================================
+   EDITOR LISTS
+   ========================================= */
+
+#contentEditor ul,
+#contentEditor ol {
+  margin: 0 0 1.25rem;
+  padding-left: 2rem;
 }
+
+#contentEditor ul {
+  list-style-type: disc;
+}
+
+#contentEditor ol {
+  list-style-type: decimal;
+}
+
+#contentEditor li {
+  margin: 0 0 .45rem;
+  padding: 0;
+}
+
+#contentEditor li:last-child {
+  margin-bottom: 0;
+}
+
+#contentEditor li p {
+  margin-bottom: .45rem;
+}
+
+#contentEditor ul ul,
+#contentEditor ol ol,
+#contentEditor ul ol,
+#contentEditor ol ul {
+  margin-top: .45rem;
+  margin-bottom: .45rem;
+}
+
+
+/* =========================================
+   EDITOR BLOCKQUOTE
+   ========================================= */
+
+#contentEditor blockquote {
+  margin: 1.5rem 0;
+  padding: 18px 22px;
+  border-left: 4px solid var(--warm-yellow);
+  border-radius: 0 10px 10px 0;
+  background: var(--warm-yellow-soft);
+  color: var(--light-black);
+  font-size: 1.05rem;
+  font-style: italic;
+  line-height: 1.7;
+}
+
+#contentEditor blockquote p {
+  margin: 0;
+}
+
+#contentEditor blockquote p + p {
+  margin-top: 1rem;
+}
+
+
+/* =========================================
+   EDITOR LINKS
+   ========================================= */
+
+#contentEditor a {
+  color: #B45309;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+#contentEditor a:hover {
+  color: #92400E;
+}
+
+
+/* =========================================
+   EDITOR IMAGES
+   ========================================= */
+
+#contentEditor img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin: 2rem auto;
+  border: 0;
+  border-radius: 10px;
+}
+
+#contentEditor img:first-child {
+  margin-top: 0;
+}
+
+#contentEditor img:last-child {
+  margin-bottom: 0;
+}
+
+
+/* =========================================
+   EDITOR HORIZONTAL RULE
+   ========================================= */
+
+#contentEditor hr {
+  width: 100%;
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+
+/* =========================================
+   EDITOR ALIGNMENT
+   ========================================= */
+
+#contentEditor [align="left"] {
+  text-align: left;
+}
+
+#contentEditor [align="center"] {
+  text-align: center;
+}
+
+#contentEditor [align="right"] {
+  text-align: right;
+}
+
+
+/* =========================================
+   EDITOR SELECTION
+   ========================================= */
+
+#contentEditor ::selection {
+  background: var(--warm-yellow-soft);
+}
+
+
+/* =========================================
+   SLUG PREVIEW
+   ========================================= */
 
 .slug-preview {
   display: flex;
@@ -1140,6 +1425,144 @@ footer strong {
 
 .slug-preview strong {
   color: var(--light-black);
+}
+
+
+/* =========================================
+   EDITOR HELP
+   ========================================= */
+
+.editor-help {
+  display: block;
+  margin-top: 8px;
+  color: var(--light-black-soft);
+  font-size: .8rem;
+}
+
+
+/* =========================================
+   IMAGE DIALOG
+   ========================================= */
+
+.editor-dialog {
+  width: min(500px, calc(100% - 32px));
+  max-width: 500px;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--light-black);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .2);
+}
+
+.editor-dialog::backdrop {
+  background: rgba(0, 0, 0, .45);
+}
+
+.editor-dialog form {
+  margin: 0;
+  padding: 24px;
+}
+
+.editor-dialog h2 {
+  margin: 0 0 20px;
+  padding: 0;
+  color: var(--light-black);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+
+/* =========================================
+   DIALOG FORM
+   ========================================= */
+
+.editor-dialog .form-group {
+  margin-bottom: 16px;
+}
+
+.editor-dialog label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--light-black);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.editor-dialog input {
+  display: block;
+  width: 100%;
+  height: 42px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--light-black);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 42px;
+}
+
+.editor-dialog input:focus {
+  outline: none;
+  border-color: var(--warm-yellow);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, .1);
+}
+
+.editor-dialog .editor-help {
+  display: block;
+  margin-top: 6px;
+}
+
+
+/* =========================================
+   DIALOG BUTTONS
+   ========================================= */
+
+.editor-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.editor-dialog-actions button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--light-black);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.editor-dialog-actions button:hover {
+  background: #F5F5F4;
+  border-color: #A8A29E;
+}
+
+.editor-dialog-actions button:focus-visible {
+  outline: 2px solid var(--warm-yellow);
+  outline-offset: 1px;
+}
+
+#insertImageButton {
+  border-color: var(--warm-yellow);
+  background: var(--warm-yellow);
+  color: #fff;
+}
+
+#insertImageButton:hover {
+  border-color: #D97706;
+  background: #D97706;
 }
 
 
@@ -1306,27 +1729,77 @@ footer strong {
 
   /* Editor */
 
-  .rich-editor {
-    min-height: 320px;
-    padding: 16px;
-  }
-
   .editor-toolbar {
-    gap: 5px;
-    padding: 8px;
+    gap: 4px;
+    padding: 7px;
   }
 
-  .editor-toolbar button,
   .editor-toolbar select {
-    height: 34px;
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 3px;
+  }
+
+  .editor-toolbar button {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+  }
+
+  .editor-toolbar .toolbar-separator {
+    height: 22px;
+    margin: 0 2px;
+  }
+
+  #contentEditor {
+    min-height: 400px;
+    padding: 16px;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  #contentEditor h1 {
+    font-size: 1.7rem;
+  }
+
+  #contentEditor h2 {
+    font-size: 1.45rem;
+  }
+
+  #contentEditor h3 {
+    font-size: 1.25rem;
+  }
+
+  #contentEditor h4 {
+    font-size: 1.1rem;
+  }
+
+  #contentEditor h5 {
+    font-size: 1rem;
+  }
+
+  #contentEditor h6 {
+    font-size: .95rem;
+  }
+
+  .editor-dialog {
+    width: calc(100% - 24px);
+  }
+
+  .editor-dialog form {
+    padding: 20px;
+  }
+
+  .editor-dialog-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .editor-dialog-actions button {
+    width: 100%;
   }
 }
 
-.category-posts {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
 
 /* =========================================
    SMALL MOBILE
@@ -1385,595 +1858,27 @@ footer strong {
   .post-content h3 {
     font-size: 1.15rem;
   }
-}
 
-/* =========================================
-   POST EDITOR
-   ========================================= */
-
-.editor-wrapper {
-  width: 100%;
-}
-
-
-/* =========================================
-   EDITOR TOOLBAR
-   ========================================= */
-
-.editor-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-  width: 100%;
-  padding: 8px;
-  background: #f8f8f7;
-  border: 1px solid #d6d3d1;
-  border-bottom: 0;
-  border-radius: 8px 8px 0 0;
-  box-sizing: border-box;
-}
-
-
-/* =========================================
-   FORMAT SELECT
-   ========================================= */
-
-.editor-toolbar select {
-  height: 38px;
-  min-width: 145px;
-  padding: 0 10px;
-  border: 1px solid #d6d3d1;
-  border-radius: 5px;
-  background: #ffffff;
-  color: #292524;
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-
-.editor-toolbar select:hover {
-  border-color: #a8a29e;
-}
-
-.editor-toolbar select:focus {
-  outline: none;
-  border-color: #f59e0b;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
-}
-
-
-/* =========================================
-   TOOLBAR BUTTONS
-   ========================================= */
-
-.editor-toolbar button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 38px;
-  height: 38px;
-  padding: 0 9px;
-  border: 1px solid #d6d3d1;
-  border-radius: 5px;
-  background: #ffffff;
-  color: #292524;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-  white-space: nowrap;
-  cursor: pointer;
-  box-sizing: border-box;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.editor-toolbar button:hover {
-  background: #f5f5f4;
-  border-color: #a8a29e;
-}
-
-.editor-toolbar button:active {
-  background: #e7e5e4;
-}
-
-.editor-toolbar button:focus-visible {
-  outline: 2px solid #f59e0b;
-  outline-offset: 1px;
-}
-
-
-/* =========================================
-   TEXT FORMAT BUTTONS
-   ========================================= */
-
-.editor-toolbar button[data-command="bold"] {
-  font-size: 16px;
-}
-
-.editor-toolbar button[data-command="italic"] {
-  font-size: 16px;
-}
-
-.editor-toolbar button[data-command="underline"] {
-  font-size: 16px;
-}
-
-.editor-toolbar button[data-command="strikeThrough"] {
-  font-size: 16px;
-}
-
-
-/* =========================================
-   TOOLBAR SEPARATORS
-   ========================================= */
-
-.toolbar-separator {
-  flex: 0 0 1px;
-  width: 1px;
-  height: 25px;
-  margin: 0 4px;
-  background: #d6d3d1;
-}
-
-
-/* =========================================
-   RICH TEXT EDITOR
-   ========================================= */
-
-#contentEditor {
-  width: 100%;
-  min-height: 500px;
-  padding: 24px;
-  border: 1px solid #d6d3d1;
-  border-radius: 0 0 8px 8px;
-  background: #ffffff;
-  color: #292524;
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-  font-size: 17px;
-  font-weight: 400;
-  line-height: 1.8;
-  text-align: left;
-  outline: none;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  box-sizing: border-box;
-}
-
-#contentEditor:focus {
-  border-color: #a8a29e;
-  box-shadow:
-    0 0 0 2px rgba(245, 158, 11, 0.1);
-}
-
-
-/* =========================================
-   EDITOR PLACEHOLDER
-   ========================================= */
-
-#contentEditor:empty::before {
-  content: attr(data-placeholder);
-  color: #a8a29e;
-  pointer-events: none;
-}
-
-
-/* =========================================
-   PARAGRAPHS
-   ========================================= */
-
-#contentEditor p {
-  margin: 0 0 1.25rem;
-  padding: 0;
-}
-
-
-/* =========================================
-   HEADINGS
-   ========================================= */
-
-#contentEditor h1,
-#contentEditor h2,
-#contentEditor h3,
-#contentEditor h4,
-#contentEditor h5,
-#contentEditor h6 {
-  margin: 1.8rem 0 0.75rem;
-  padding: 0;
-  color: #1c1917;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-#contentEditor h1 {
-  font-size: 2rem;
-}
-
-#contentEditor h2 {
-  font-size: 1.65rem;
-}
-
-#contentEditor h3 {
-  font-size: 1.4rem;
-}
-
-#contentEditor h4 {
-  font-size: 1.2rem;
-}
-
-#contentEditor h5 {
-  font-size: 1.05rem;
-}
-
-#contentEditor h6 {
-  font-size: 0.95rem;
-}
-
-
-/* =========================================
-   BOLD / ITALIC / UNDERLINE / STRIKE
-   ========================================= */
-
-#contentEditor strong,
-#contentEditor b {
-  font-weight: 700;
-}
-
-#contentEditor em,
-#contentEditor i {
-  font-style: italic;
-}
-
-#contentEditor u {
-  text-decoration: underline;
-}
-
-#contentEditor s,
-#contentEditor strike {
-  text-decoration: line-through;
-}
-
-
-/* =========================================
-   LISTS
-   ========================================= */
-
-#contentEditor ul,
-#contentEditor ol {
-  margin: 0 0 1.25rem;
-  padding-left: 2rem;
-}
-
-#contentEditor ul {
-  list-style-type: disc;
-}
-
-#contentEditor ol {
-  list-style-type: decimal;
-}
-
-#contentEditor li {
-  margin: 0 0 0.4rem;
-  padding: 0;
-}
-
-#contentEditor li p {
-  margin-bottom: 0.4rem;
-}
-
-
-/* =========================================
-   BLOCKQUOTE
-   ========================================= */
-
-#contentEditor blockquote {
-  margin: 1.5rem 0;
-  padding: 1rem 1.25rem;
-  border-left: 4px solid #f59e0b;
-  background: #fafaf9;
-  color: #57534e;
-  font-size: 1.05rem;
-  font-style: italic;
-  line-height: 1.7;
-}
-
-#contentEditor blockquote p {
-  margin: 0;
-}
-
-
-/* =========================================
-   LINKS
-   ========================================= */
-
-#contentEditor a {
-  color: #b45309;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-  cursor: pointer;
-}
-
-#contentEditor a:hover {
-  color: #92400e;
-}
-
-
-/* =========================================
-   IMAGES
-   ========================================= */
-
-#contentEditor img {
-  display: block;
-  max-width: 100%;
-  width: auto;
-  height: auto;
-  margin: 1.5rem auto;
-  border: 0;
-  border-radius: 6px;
-  box-sizing: border-box;
-}
-
-#contentEditor img:first-child {
-  margin-top: 0;
-}
-
-
-/* =========================================
-   HORIZONTAL RULE
-   ========================================= */
-
-#contentEditor hr {
-  width: 100%;
-  margin: 2rem 0;
-  border: 0;
-  border-top: 1px solid #d6d3d1;
-}
-
-
-/* =========================================
-   TEXT ALIGNMENT
-   ========================================= */
-
-#contentEditor [align="left"] {
-  text-align: left;
-}
-
-#contentEditor [align="center"] {
-  text-align: center;
-}
-
-#contentEditor [align="right"] {
-  text-align: right;
-}
-
-
-/* =========================================
-   EDITOR SELECTION
-   ========================================= */
-
-#contentEditor ::selection {
-  background: #fef3c7;
-}
-
-
-/* =========================================
-   IMAGE DIALOG
-   ========================================= */
-
-.editor-dialog {
-  width: min(500px, calc(100% - 32px));
-  max-width: 500px;
-  margin: auto;
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-  background: #ffffff;
-  color: #292524;
-  box-shadow:
-    0 20px 50px rgba(0, 0, 0, 0.2);
-}
-
-.editor-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.45);
-}
-
-.editor-dialog form {
-  margin: 0;
-  padding: 24px;
-}
-
-.editor-dialog h2 {
-  margin: 0 0 20px;
-  padding: 0;
-  color: #1c1917;
-  font-size: 1.25rem;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-
-/* =========================================
-   DIALOG FORM
-   ========================================= */
-
-.editor-dialog .form-group {
-  margin-bottom: 16px;
-}
-
-.editor-dialog label {
-  display: block;
-  margin-bottom: 6px;
-  color: #292524;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.editor-dialog input {
-  display: block;
-  width: 100%;
-  height: 42px;
-  margin: 0;
-  padding: 0 12px;
-  border: 1px solid #d6d3d1;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #292524;
-  font-family: inherit;
-  font-size: 15px;
-  line-height: 42px;
-  box-sizing: border-box;
-}
-
-.editor-dialog input:focus {
-  outline: none;
-  border-color: #f59e0b;
-  box-shadow:
-    0 0 0 2px rgba(245, 158, 11, 0.1);
-}
-
-.editor-dialog .editor-help {
-  display: block;
-  margin-top: 6px;
-}
-
-
-/* =========================================
-   DIALOG BUTTONS
-   ========================================= */
-
-.editor-dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  margin-top: 20px;
-}
-
-.editor-dialog-actions button {
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid #d6d3d1;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #292524;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.editor-dialog-actions button:hover {
-  background: #f5f5f4;
-  border-color: #a8a29e;
-}
-
-.editor-dialog-actions button:focus-visible {
-  outline: 2px solid #f59e0b;
-  outline-offset: 1px;
-}
-
-#insertImageButton {
-  border-color: #f59e0b;
-  background: #f59e0b;
-  color: #ffffff;
-}
-
-#insertImageButton:hover {
-  border-color: #d97706;
-  background: #d97706;
-}
-
-
-/* =========================================
-   MOBILE EDITOR
-   ========================================= */
-
-@media (max-width: 700px) {
-
-  .editor-toolbar {
-    gap: 4px;
-    padding: 7px;
+  #contentEditor {
+    min-height: 350px;
+    padding: 14px;
   }
 
-  .editor-toolbar select {
-    width: 100%;
-    min-width: 0;
-    margin-bottom: 3px;
+  .editor-toolbar {
+    padding: 6px;
   }
 
   .editor-toolbar button {
-    min-width: 36px;
-    height: 36px;
-    padding: 0 8px;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 7px;
+    font-size: 13px;
   }
 
-  .toolbar-separator {
-    height: 22px;
-    margin: 0 2px;
+  .editor-toolbar button[data-command="bold"],
+  .editor-toolbar button[data-command="italic"],
+  .editor-toolbar button[data-command="underline"],
+  .editor-toolbar button[data-command="strikeThrough"] {
+    font-size: 15px;
   }
-
-  #contentEditor {
-    min-height: 400px;
-    padding: 16px;
-    font-size: 16px;
-    line-height: 1.75;
-  }
-
-  #contentEditor h1 {
-    font-size: 1.7rem;
-  }
-
-  #contentEditor h2 {
-    font-size: 1.45rem;
-  }
-
-  #contentEditor h3 {
-    font-size: 1.25rem;
-  }
-
-  #contentEditor h4 {
-    font-size: 1.1rem;
-  }
-
-  #contentEditor h5 {
-    font-size: 1rem;
-  }
-
-  #contentEditor h6 {
-    font-size: 0.95rem;
-  }
-
-  .editor-dialog {
-    width: calc(100% - 24px);
-  }
-
-  .editor-dialog form {
-    padding: 20px;
-  }
-
-  .editor-dialog-actions {
-    flex-direction: column-reverse;
-    align-items: stretch;
-  }
-
-  .editor-dialog-actions button {
-    width: 100%;
-  }
-
 }
