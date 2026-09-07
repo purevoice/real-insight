@@ -3,43 +3,131 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Categories | Real Insight</title>
-  <meta name="description" content="Browse Real Insight posts by category.">
+
+  <title id="pageTitle">Category | Real Insight</title>
+
+  <meta
+    name="description"
+    id="pageDescription"
+    content="Browse Real Insight posts by category."
+  >
+
   <link rel="stylesheet" href="/style.css">
 </head>
+
 <body>
+
 <header>
   <div class="nav-container">
-    <a href="/" class="logo">Real Insight<span class="logo-dot"></span></a>
+
+    <a href="/" class="logo">
+      Real Insight<span class="logo-dot"></span>
+    </a>
+
     <nav class="nav-links" id="navLinks">
-      <a href="/">Home</a>
-      <a href="/categories" class="active">Categories</a>
-      <a href="/add-post">Add New Post</a>
+
+      <a href="/">
+        Home
+      </a>
+
+      <a href="/categories">
+        Categories
+      </a>
+
+      <a href="/add-post">
+        Add New Post
+      </a>
+
     </nav>
-    <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
-      <span></span><span></span><span></span>
+
+    <button
+      class="menu-toggle"
+      id="menuToggle"
+      aria-label="Toggle navigation"
+      aria-expanded="false"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
     </button>
+
   </div>
 </header>
 
+
 <main>
+
   <section class="home-container">
+
     <div class="page-intro">
-      <h1>Categories</h1>
-      <p>Browse published posts by category.</p>
+
+      <p class="breadcrumb">
+        <a href="/">Home</a>
+        /
+        <span>Category</span>
+      </p>
+
+      <h1 id="categoryTitle">
+        Category
+      </h1>
+
+      <p id="categoryDescription">
+        Browse the latest posts in this category.
+      </p>
+
     </div>
-    <div class="category-list" id="categoryList"></div>
+
+
+    <div class="category-layout">
+
+      <section class="category-posts">
+
+        <div
+          id="categoryPostList"
+          class="post-list"
+        ></div>
+
+      </section>
+
+
+      <aside class="category-sidebar">
+
+        <div class="sidebar-section">
+
+          <h2>
+            Categories
+          </h2>
+
+          <div
+            id="categorySidebar"
+            class="category-sidebar-list"
+          ></div>
+
+        </div>
+
+      </aside>
+
+    </div>
+
   </section>
+
 </main>
 
+
 <footer>
-  <p>&copy; <span id="currentYear"></span> <strong>Real Insight</strong>. All rights reserved.</p>
+
+  <p>
+    &copy;
+    <span id="currentYear"></span>
+    <strong>Real Insight</strong>.
+    All rights reserved.
+  </p>
+
 </footer>
+
 
 <script src="/app.js"></script>
 <script src="/categories.js"></script>
-<script>
-  // Category loading will be connected to the Apps Script API later.
-</script>
+
 </body>
 </html>

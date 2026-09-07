@@ -1,3 +1,5 @@
-# Clean URLs for individual posts.
-# Netlify serves the generic post template for any first-level path.
+# Category archive pages
+/category/*    /category/:splat/index.html    200
+
+# Clean URLs for individual posts
 /*    /post.html    200

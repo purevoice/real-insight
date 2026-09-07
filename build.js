@@ -60,6 +60,21 @@ function escapeAttribute(value) {
 
 
 /* =========================================
+   CREATE CATEGORY SLUG
+   ========================================= */
+
+function createCategorySlug(category) {
+
+  return String(category || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+}
+
+
+/* =========================================
    POST DATA SCRIPT
    ========================================= */
 
@@ -340,16 +355,16 @@ function readPosts() {
           ).trim(),
 
         date:
-  String(
-    data.date || ""
-  ).trim(),
+          String(
+            data.date || ""
+          ).trim(),
 
-publishedAt:
-  String(
-    data.publishedAt || ""
-  ).trim(),
+        publishedAt:
+          String(
+            data.publishedAt || ""
+          ).trim(),
 
-readingTime:
+        readingTime:
           String(
             data.readingTime || ""
           ).trim(),
@@ -391,22 +406,22 @@ readingTime:
    */
 
   posts.sort(
-  function(a, b) {
+    function(a, b) {
 
-    const timeA =
-      Date.parse(
-        a.publishedAt || a.date || ""
-      );
+      const timeA =
+        Date.parse(
+          a.publishedAt || a.date || ""
+        );
 
-    const timeB =
-      Date.parse(
-        b.publishedAt || b.date || ""
-      );
+      const timeB =
+        Date.parse(
+          b.publishedAt || b.date || ""
+        );
 
-    return timeB - timeA;
+      return timeB - timeA;
 
-  }
-);
+    }
+  );
 
 
   return posts;
@@ -1169,7 +1184,7 @@ function renderCategoryPost(
 
 
 /* =========================================
-   BUILD CATEGORY POST LIST
+   BUILD CATEGORY PAGES
    ========================================= */
 
 function buildCategories(
@@ -1186,12 +1201,12 @@ function buildCategories(
       "categories.html was not found. Skipping category build."
     );
 
-    return;
+    return [];
 
   }
 
 
-  let html =
+  const template =
     fs.readFileSync(
       CATEGORIES_PATH,
       "utf8"
@@ -1207,20 +1222,43 @@ function buildCategories(
 
   posts.forEach(function(post) {
 
-    const category =
+    const categoryName =
       post.category || "Uncategorized";
 
 
-    if (
-      !categories[category]
-    ) {
+    const categorySlug =
+      createCategorySlug(
+        categoryName
+      );
 
-      categories[category] = [];
+
+    if (!categorySlug) {
+
+      return;
 
     }
 
 
-    categories[category].push(
+    if (
+      !categories[categorySlug]
+    ) {
+
+      categories[categorySlug] = {
+
+        name:
+          categoryName,
+
+        slug:
+          categorySlug,
+
+        posts: []
+
+      };
+
+    }
+
+
+    categories[categorySlug].posts.push(
       post
     );
 
@@ -1231,121 +1269,284 @@ function buildCategories(
    * Sort categories alphabetically.
    */
 
-  const categoryNames =
-    Object.keys(
+  const categoryList =
+    Object.values(
       categories
-    ).sort(function(a, b) {
+    )
+    .sort(function(a, b) {
 
-      return a.localeCompare(b);
+      return a.name.localeCompare(
+        b.name
+      );
 
     });
 
 
-  let categoryHtml = "";
+  /*
+   * Create the category directory.
+   */
+
+  const categoryRoot =
+    path.join(
+      ROOT,
+      "category"
+    );
 
 
-  categoryNames.forEach(function(category) {
+  fs.mkdirSync(
+    categoryRoot,
+    {
+      recursive: true
+    }
+  );
 
-    const categoryPosts =
-      categories[category];
+
+  /*
+   * Remove previously generated
+   * category pages.
+   *
+   * This ensures categories that no
+   * longer exist are not left behind.
+   */
+
+  if (
+    fs.existsSync(
+      categoryRoot
+    )
+  ) {
+
+    const existingCategories =
+      fs.readdirSync(
+        categoryRoot,
+        {
+          withFileTypes: true
+        }
+      );
 
 
-    categoryHtml += `
-<section class="category-section">
+    existingCategories.forEach(function(item) {
 
-  <div class="category-heading">
+      if (
+        item.isDirectory()
+      ) {
 
-    <h2 class="category-title">
-      ${escapeHtml(category)}
-    </h2>
+        fs.rmSync(
+          path.join(
+            categoryRoot,
+            item.name
+          ),
+          {
+            recursive: true,
+            force: true
+          }
+        );
 
-    <span class="category-count">
-      ${categoryPosts.length}
-      ${categoryPosts.length === 1 ? "post" : "posts"}
-    </span>
+      }
 
-  </div>
+    });
 
-  <div class="category-posts">
+  }
 
-    ${categoryPosts
-      .map(renderCategoryPost)
-      .join("\n")}
 
-  </div>
+  /*
+   * Build each category page.
+   */
 
-</section>
-`;
+  categoryList.forEach(function(category) {
+
+    const categoryDirectory =
+      path.join(
+        categoryRoot,
+        category.slug
+      );
+
+
+    fs.mkdirSync(
+      categoryDirectory,
+      {
+        recursive: true
+      }
+    );
+
+
+    /*
+     * Render posts belonging to this
+     * category only.
+     */
+
+    const categoryPostsHtml =
+      category.posts
+        .map(
+          renderCategoryPost
+        )
+        .join("\n");
+
+
+    /*
+     * Build sidebar containing all
+     * available categories.
+     */
+
+    const sidebarHtml =
+      categoryList
+        .map(function(item) {
+
+          return `
+<a
+  href="/category/${encodeURIComponent(item.slug)}/"
+  class="category-sidebar-item${
+    item.slug === category.slug
+      ? " active"
+      : ""
+  }"
+>
+
+  <span>
+    ${escapeHtml(item.name)}
+  </span>
+
+  <span>
+    ${item.posts.length}
+  </span>
+
+</a>`;
+
+        })
+        .join("\n");
+
+
+    /*
+     * Create category description.
+     */
+
+    const count =
+      category.posts.length;
+
+
+    const description =
+      `Browse ${count} ${
+        count === 1
+          ? "post"
+          : "posts"
+      } in ${category.name}.`;
+
+
+    /*
+     * Start from the reusable
+     * categories.html template.
+     */
+
+    let html =
+      template;
+
+
+    /*
+     * Replace page title.
+     */
+
+    html =
+      html.replace(
+        /<title[^>]*id=["']pageTitle["'][^>]*>[\s\S]*?<\/title>/i,
+
+        `<title id="pageTitle">${escapeHtml(category.name)} | Real Insight</title>`
+      );
+
+
+    /*
+     * Replace meta description.
+     */
+
+    html =
+      html.replace(
+        /(<meta[^>]*id=["']pageDescription["'][^>]*content=["'])[^"]*(["'][^>]*>)/i,
+
+        `$1${escapeAttribute(description)}$2`
+      );
+
+
+    /*
+     * Replace category heading.
+     */
+
+    html =
+      html.replace(
+        /<h1[^>]*id=["']categoryTitle["'][^>]*>[\s\S]*?<\/h1>/i,
+
+        `<h1 id="categoryTitle">${escapeHtml(category.name)}</h1>`
+      );
+
+
+    /*
+     * Replace category description.
+     */
+
+    html =
+      html.replace(
+        /<p[^>]*id=["']categoryDescription["'][^>]*>[\s\S]*?<\/p>/i,
+
+        `<p id="categoryDescription">${escapeHtml(description)}</p>`
+      );
+
+
+    /*
+     * Replace category post list.
+     */
+
+    html =
+      html.replace(
+        /<div[^>]*id=["']categoryPostList["'][^>]*>[\s\S]*?<\/div>/i,
+
+        `<div id="categoryPostList" class="post-list">${categoryPostsHtml}</div>`
+      );
+
+
+    /*
+     * Replace category sidebar.
+     */
+
+    html =
+      html.replace(
+        /<div[^>]*id=["']categorySidebar["'][^>]*>[\s\S]*?<\/div>/i,
+
+        `<div id="categorySidebar" class="category-sidebar-list">${sidebarHtml}</div>`
+      );
+
+
+    /*
+     * Write:
+     *
+     * category/news/index.html
+     * category/sports/index.html
+     * category/politics/index.html
+     */
+
+    const outputPath =
+      path.join(
+        categoryDirectory,
+        "index.html"
+      );
+
+
+    fs.writeFileSync(
+      outputPath,
+      html,
+      "utf8"
+    );
+
+
+    console.log(
+      `Built category: /category/${category.slug}/`
+    );
 
   });
 
 
   /*
-   * Replace the empty categoryList container
-   * from categories.html.
-   *
-   * This expects:
-   *
-   * <div class="category-list" id="categoryList"></div>
+   * Return the generated categories
+   * so the sitemap can use them.
    */
 
-  const categoryListRegex =
-    /(<div[^>]*class=["'][^"']*category-list[^"']*["'][^>]*id=["']categoryList["'][^>]*>)[\s\S]*?(<\/div>)/i;
-
-
-  if (
-    categoryListRegex.test(html)
-  ) {
-
-    html =
-      html.replace(
-        categoryListRegex,
-        `$1\n${categoryHtml}\n$2`
-      );
-
-  } else {
-
-    /*
-     * Also support id appearing before class.
-     */
-
-    const alternateCategoryListRegex =
-      /(<div[^>]*id=["']categoryList["'][^>]*class=["'][^"']*category-list[^"']*["'][^>]*>)[\s\S]*?(<\/div>)/i;
-
-
-    if (
-      alternateCategoryListRegex.test(html)
-    ) {
-
-      html =
-        html.replace(
-          alternateCategoryListRegex,
-          `$1\n${categoryHtml}\n$2`
-        );
-
-    } else {
-
-      console.warn(
-        "categoryList container was not found in categories.html."
-      );
-
-      return;
-
-    }
-
-  }
-
-
-  fs.writeFileSync(
-    CATEGORIES_PATH,
-    html,
-    "utf8"
-  );
-
-
-  console.log(
-    `Built category list: ${categoryNames.length} categor${categoryNames.length === 1 ? "y" : "ies"}.`
-  );
+  return categoryList;
 
 }
 
@@ -1355,7 +1556,8 @@ function buildCategories(
    ========================================= */
 
 function buildSitemap(
-  posts
+  posts,
+  categories
 ) {
 
   const siteUrl =
@@ -1393,18 +1595,24 @@ function buildSitemap(
 
 
   /*
-   * Categories page
+   * Individual category pages.
    */
 
-  urls.push(`
+  categories.forEach(function(category) {
+
+    const categoryUrl =
+      `${siteUrl}/category/${encodeURIComponent(category.slug)}/`;
+
+
+    urls.push(`
   <url>
 
     <loc>
-      ${escapeHtml(siteUrl)}/categories
+      ${escapeHtml(categoryUrl)}
     </loc>
 
     <changefreq>
-      weekly
+      daily
     </changefreq>
 
     <priority>
@@ -1412,6 +1620,8 @@ function buildSitemap(
     </priority>
 
   </url>`);
+
+  });
 
 
   /*
@@ -1492,7 +1702,7 @@ ${urls.join("\n")}
 
 
   console.log(
-    `Built sitemap.xml with ${posts.length + 2} URL(s).`
+    `Built sitemap.xml with ${posts.length + categories.length + 1} URL(s).`
   );
 
 }
@@ -1563,12 +1773,13 @@ function build() {
 
 
   /*
-   * Build category post list.
+   * Build individual category pages.
    */
 
-  buildCategories(
-    posts
-  );
+  const categories =
+    buildCategories(
+      posts
+    );
 
 
   /*
@@ -1576,7 +1787,8 @@ function build() {
    */
 
   buildSitemap(
-    posts
+    posts,
+    categories
   );
 
 
