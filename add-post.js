@@ -15,22 +15,43 @@
  */
 
 const form = document.getElementById("postForm");
-const titleInput = document.getElementById("title");
-const slugInput = document.getElementById("slug");
-const slugPreview = document.getElementById("slugPreview");
 
-const categoryInput = document.getElementById("category");
-const readingTimeInput = document.getElementById("readingTime");
-const excerptInput = document.getElementById("excerpt");
+const titleInput =
+  document.getElementById("title");
 
-const editor = document.getElementById("contentEditor");
-const contentInput = document.getElementById("content");
+const slugInput =
+  document.getElementById("slug");
 
-const tagsInput = document.getElementById("tags");
-const accessCodeInput = document.getElementById("accessCode");
+const slugPreview =
+  document.getElementById("slugPreview");
 
-const message = document.getElementById("formMessage");
-const publishButton = document.getElementById("publishButton");
+const categoryInput =
+  document.getElementById("category");
+
+const readingTimeInput =
+  document.getElementById("readingTime");
+
+const excerptInput =
+  document.getElementById("excerpt");
+
+const editor =
+  document.getElementById("contentEditor");
+
+const contentInput =
+  document.getElementById("content");
+
+const tagsInput =
+  document.getElementById("tags");
+
+const accessCodeInput =
+  document.getElementById("accessCode");
+
+const message =
+  document.getElementById("formMessage");
+
+const publishButton =
+  document.getElementById("publishButton");
+
 
 let savedRange = null;
 
@@ -40,6 +61,7 @@ let savedRange = null;
    ========================================= */
 
 function generateSlug(title) {
+
   return String(title || "")
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -49,15 +71,20 @@ function generateSlug(title) {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
+
 }
 
 
 function updateSlug() {
-  const slug = generateSlug(titleInput.value);
+
+  const slug =
+    generateSlug(titleInput.value);
 
   slugInput.value = slug;
+
   slugPreview.textContent =
     slug || "your-post-title";
+
 }
 
 
@@ -72,31 +99,51 @@ titleInput.addEventListener(
    ========================================= */
 
 function saveSelection() {
-  const selection = window.getSelection();
 
-  if (!selection || selection.rangeCount === 0) {
+  const selection =
+    window.getSelection();
+
+  if (
+    !selection ||
+    selection.rangeCount === 0
+  ) {
     return;
   }
 
-  const range = selection.getRangeAt(0);
+  const range =
+    selection.getRangeAt(0);
 
-  if (editor.contains(range.commonAncestorContainer)) {
-    savedRange = range.cloneRange();
+  if (
+    editor.contains(
+      range.commonAncestorContainer
+    )
+  ) {
+
+    savedRange =
+      range.cloneRange();
+
   }
+
 }
 
 
 function restoreSelection() {
+
   editor.focus();
 
   if (!savedRange) {
     return;
   }
 
-  const selection = window.getSelection();
+  const selection =
+    window.getSelection();
 
   selection.removeAllRanges();
-  selection.addRange(savedRange);
+
+  selection.addRange(
+    savedRange
+  );
+
 }
 
 
@@ -118,26 +165,34 @@ editor.addEventListener(
 editor.addEventListener(
   "input",
   function() {
+
     saveSelection();
+
     syncContent();
+
   }
 );
 
 
 /*
- * Save the selection before the toolbar
- * button takes focus away from the editor.
+ * Prevent toolbar buttons from taking
+ * focus away from the editor.
  */
 
 document
-  .querySelectorAll(".editor-toolbar button")
+  .querySelectorAll(
+    ".editor-toolbar button"
+  )
   .forEach(function(button) {
 
     button.addEventListener(
       "mousedown",
       function(event) {
+
         event.preventDefault();
+
         saveSelection();
+
       }
     );
 
@@ -149,15 +204,17 @@ document
    ========================================= */
 
 function syncContent() {
+
   contentInput.value =
     cleanEditorHTML(
       editor.innerHTML
     );
+
 }
 
 
 /* =========================================
-   FORMATTING
+   EXECUTE FORMATTING COMMAND
    ========================================= */
 
 function executeCommand(
@@ -178,6 +235,7 @@ function executeCommand(
   saveSelection();
 
   editor.focus();
+
 }
 
 
@@ -206,11 +264,13 @@ document
 
 
 /* =========================================
-   HEADINGS / PARAGRAPHS
+   HEADING / PARAGRAPH SELECTOR
    ========================================= */
 
 const formatBlock =
-  document.getElementById("formatBlock");
+  document.getElementById(
+    "formatBlock"
+  );
 
 
 if (formatBlock) {
@@ -258,15 +318,18 @@ if (blockquoteButton) {
         node &&
         node.nodeType === Node.TEXT_NODE
       ) {
-        node = node.parentElement;
+
+        node =
+          node.parentElement;
+
       }
 
-      const existingBlockquote =
+      const blockquote =
         node &&
         node.closest &&
         node.closest("blockquote");
 
-      if (existingBlockquote) {
+      if (blockquote) {
 
         document.execCommand(
           "formatBlock",
@@ -329,106 +392,105 @@ if (linkButton) {
         );
 
       if (!url) {
+
         editor.focus();
+
         return;
+
       }
 
       const trimmedUrl =
         url.trim();
 
+
       if (
-        !/^https?:\/\//i.test(
-          trimmedUrl
-        )
+        !isSafeUrl(trimmedUrl)
       ) {
+
         showError(
-          "Please enter a valid URL starting with http:// or https://."
+          "Please enter a valid URL."
         );
 
         editor.focus();
+
         return;
+
       }
 
-      executeCommand(
-        "createLink",
-        trimmedUrl
-      );
 
       /*
-       * If there was no selected text,
-       * createLink has nothing to wrap.
-       * Insert the URL as linked text instead.
+       * If text is selected, turn the
+       * selected text into a link.
        */
 
-      if (!selectedText) {
+      if (selectedText) {
 
-        restoreSelection();
+        executeCommand(
+          "createLink",
+          trimmedUrl
+        );
 
-        const link =
-          document.createElement("a");
-
-        link.href =
-          trimmedUrl;
-
-        link.target =
-          "_blank";
-
-        link.rel =
-          "noopener noreferrer";
-
-        link.textContent =
-          trimmedUrl;
-
-        const selectionNow =
-          window.getSelection();
-
-        if (
-          selectionNow &&
-          selectionNow.rangeCount
-        ) {
-
-          const range =
-            selectionNow.getRangeAt(0);
-
-          range.deleteContents();
-
-          range.insertNode(link);
-
-          range.setStartAfter(link);
-          range.collapse(true);
-
-          selectionNow.removeAllRanges();
-          selectionNow.addRange(range);
-
-        }
-
-        syncContent();
+        return;
 
       }
 
-    }
-  );
 
-}
+      /*
+       * If nothing is selected, insert
+       * the URL itself as linked text.
+       */
+
+      const link =
+        document.createElement("a");
+
+      link.href =
+        trimmedUrl;
+
+      link.target =
+        "_blank";
+
+      link.rel =
+        "noopener noreferrer";
+
+      link.textContent =
+        trimmedUrl;
 
 
-/* =========================================
-   REMOVE LINK
-   ========================================= */
-
-const unlinkButton =
-  document.querySelector(
-    '[data-command="unlink"]'
-  );
+      const currentSelection =
+        window.getSelection();
 
 
-if (unlinkButton) {
+      if (
+        currentSelection &&
+        currentSelection.rangeCount
+      ) {
 
-  unlinkButton.addEventListener(
-    "click",
-    function() {
+        const range =
+          currentSelection.getRangeAt(0);
 
-      executeCommand("unlink");
+        range.deleteContents();
+
+        range.insertNode(link);
+
+        range.setStartAfter(link);
+
+        range.collapse(true);
+
+        currentSelection.removeAllRanges();
+
+        currentSelection.addRange(
+          range
+        );
+
+        savedRange =
+          range.cloneRange();
+
+      }
+
+
+      syncContent();
+
+      editor.focus();
 
     }
   );
@@ -483,13 +545,16 @@ if (
       saveSelection();
 
       imageUrlInput.value = "";
+
       imageAltInput.value = "";
 
       imageDialog.showModal();
 
       setTimeout(
         function() {
+
           imageUrlInput.focus();
+
         },
         50
       );
@@ -499,6 +564,10 @@ if (
 
 }
 
+
+/* =========================================
+   CLOSE IMAGE DIALOG
+   ========================================= */
 
 if (cancelImageButton) {
 
@@ -516,6 +585,10 @@ if (cancelImageButton) {
 }
 
 
+/* =========================================
+   INSERT IMAGE
+   ========================================= */
+
 if (insertImageButton) {
 
   insertImageButton.addEventListener(
@@ -528,6 +601,7 @@ if (insertImageButton) {
       const alt =
         imageAltInput.value.trim();
 
+
       if (!url) {
 
         imageUrlInput.focus();
@@ -536,8 +610,9 @@ if (insertImageButton) {
 
       }
 
+
       if (
-        !/^https?:\/\//i.test(url)
+        !isSafeImageUrl(url)
       ) {
 
         showError(
@@ -550,26 +625,23 @@ if (insertImageButton) {
 
       }
 
+
       restoreSelection();
+
 
       const image =
         document.createElement("img");
 
       image.src = url;
-      image.alt = alt;
 
-      /*
-       * Keep images responsive inside
-       * the published article.
-       */
+      image.alt = alt;
 
       image.loading = "lazy";
 
-      image.style.maxWidth = "100%";
-      image.style.height = "auto";
 
       const selection =
         window.getSelection();
+
 
       if (
         selection &&
@@ -581,43 +653,44 @@ if (insertImageButton) {
 
         range.deleteContents();
 
+        range.insertNode(image);
+
+
         /*
-         * Add a paragraph before/after the
-         * image when needed so images don't
-         * run directly into surrounding text.
+         * Put the cursor after the image
+         * so the user can continue writing.
          */
 
-        const paragraph =
-          document.createElement("p");
+        const spacer =
+          document.createElement("br");
 
-        paragraph.appendChild(image);
+        image.parentNode.insertBefore(
+          spacer,
+          image.nextSibling
+        );
 
-        range.insertNode(paragraph);
 
-        range.setStartAfter(paragraph);
+        range.setStartAfter(spacer);
+
         range.collapse(true);
 
         selection.removeAllRanges();
+
         selection.addRange(range);
+
+        savedRange =
+          range.cloneRange();
 
       } else {
 
-        editor.appendChild(
-          document.createElement("p")
-        );
-
-        const paragraph =
-          editor.lastElementChild;
-
-        paragraph.appendChild(image);
+        editor.appendChild(image);
 
       }
+
 
       syncContent();
 
       imageDialog.close();
-
-      saveSelection();
 
       editor.focus();
 
@@ -674,7 +747,9 @@ if (undoButton) {
     "click",
     function() {
 
-      executeCommand("undo");
+      executeCommand(
+        "undo"
+      );
 
     }
   );
@@ -688,9 +763,66 @@ if (redoButton) {
     "click",
     function() {
 
-      executeCommand("redo");
+      executeCommand(
+        "redo"
+      );
 
     }
+  );
+
+}
+
+
+/* =========================================
+   URL VALIDATION
+   ========================================= */
+
+function isSafeUrl(url) {
+
+  if (!url) {
+    return false;
+  }
+
+  if (
+    /^(javascript|data|vbscript):/i.test(
+      url
+    )
+  ) {
+    return false;
+  }
+
+
+  if (
+    /^https?:\/\//i.test(url)
+  ) {
+    return true;
+  }
+
+
+  if (
+    /^(mailto|tel):/i.test(url)
+  ) {
+    return true;
+  }
+
+
+  if (
+    url.startsWith("/") ||
+    url.startsWith("#")
+  ) {
+    return true;
+  }
+
+
+  return false;
+
+}
+
+
+function isSafeImageUrl(url) {
+
+  return /^https?:\/\//i.test(
+    url
   );
 
 }
@@ -709,7 +841,8 @@ function cleanEditorHTML(html) {
 
 
   /*
-   * Remove unwanted editor attributes.
+   * Remove unwanted styling/classes
+   * created inside the editor.
    */
 
   container
@@ -718,15 +851,20 @@ function cleanEditorHTML(html) {
     )
     .forEach(function(element) {
 
-      element.removeAttribute("style");
+      element.removeAttribute(
+        "style"
+      );
+
 
       /*
-       * Keep only classes that we
-       * explicitly want.
+       * Preserve only the lead class
+       * if it is intentionally used.
        */
 
       if (
-        element.classList.contains("lead")
+        element.classList.contains(
+          "lead"
+        )
       ) {
 
         element.setAttribute(
@@ -736,16 +874,18 @@ function cleanEditorHTML(html) {
 
       } else {
 
-        element.removeAttribute("class");
+        element.removeAttribute(
+          "class"
+        );
 
       }
 
     });
 
 
-  /*
-   * Clean links.
-   */
+  /* =======================================
+     LINKS
+  ======================================== */
 
   container
     .querySelectorAll("a")
@@ -754,12 +894,9 @@ function cleanEditorHTML(html) {
       const href =
         link.getAttribute("href") || "";
 
-      /*
-       * Remove dangerous URLs.
-       */
 
       if (
-        /^(javascript|data|vbscript):/i.test(
+        !isSafeUrl(
           href.trim()
         )
       ) {
@@ -774,6 +911,7 @@ function cleanEditorHTML(html) {
 
       }
 
+
       link.setAttribute(
         "target",
         "_blank"
@@ -787,9 +925,9 @@ function cleanEditorHTML(html) {
     });
 
 
-  /*
-   * Clean images.
-   */
+  /* =======================================
+     IMAGES
+  ======================================== */
 
   container
     .querySelectorAll("img")
@@ -798,10 +936,9 @@ function cleanEditorHTML(html) {
       const src =
         image.getAttribute("src") || "";
 
+
       if (
-        /^(javascript|data|vbscript):/i.test(
-          src.trim()
-        )
+        !isSafeImageUrl(src)
       ) {
 
         image.remove();
@@ -810,18 +947,23 @@ function cleanEditorHTML(html) {
 
       }
 
-      image.removeAttribute("style");
-      image.removeAttribute("class");
+
+      image.removeAttribute(
+        "style"
+      );
+
+      image.removeAttribute(
+        "class"
+      );
 
       image.setAttribute(
         "loading",
         "lazy"
       );
 
+
       /*
-       * Always keep an alt attribute,
-       * even when the editor user leaves
-       * it empty.
+       * Always preserve an alt attribute.
        */
 
       if (
@@ -839,6 +981,7 @@ function cleanEditorHTML(html) {
 
 
   return container.innerHTML.trim();
+
 }
 
 
@@ -853,15 +996,18 @@ function calculateReadingTime(html) {
 
   temp.innerHTML = html;
 
+
   const text =
     temp.textContent
       .replace(/\s+/g, " ")
       .trim();
 
+
   const words =
     text
       ? text.split(" ").length
       : 0;
+
 
   const minutes =
     Math.max(
@@ -869,7 +1015,9 @@ function calculateReadingTime(html) {
       Math.ceil(words / 200)
     );
 
+
   return `${minutes} min read`;
+
 }
 
 
@@ -883,14 +1031,16 @@ form.addEventListener(
 
     event.preventDefault();
 
+
     message.textContent = "";
+
     message.className =
       "form-message";
 
 
     /*
-     * Always sync the editor immediately
-     * before collecting the post content.
+     * Make sure the hidden content field
+     * always contains the latest editor HTML.
      */
 
     syncContent();
@@ -899,27 +1049,35 @@ form.addEventListener(
     const title =
       titleInput.value.trim();
 
+
     const slug =
       generateSlug(title);
+
 
     const category =
       categoryInput.value.trim();
 
+
     const excerpt =
       excerptInput.value.trim();
+
 
     const content =
       cleanEditorHTML(
         editor.innerHTML
       );
 
+
     const tags =
       tagsInput.value
         .split(",")
         .map(function(tag) {
+
           return tag.trim();
+
         })
         .filter(Boolean);
+
 
     const accessCode =
       accessCodeInput.value;
@@ -1030,7 +1188,8 @@ form.addEventListener(
     };
 
 
-    publishButton.disabled = true;
+    publishButton.disabled =
+      true;
 
     publishButton.textContent =
       "Publishing...";
@@ -1053,11 +1212,13 @@ form.addEventListener(
               post,
               accessCode
             })
+
           }
         );
 
 
       let result;
+
 
       try {
 
@@ -1126,14 +1287,17 @@ form.addEventListener(
         error
       );
 
+
       showError(
         error.message ||
         "Publishing failed."
       );
 
+
     } finally {
 
-      publishButton.disabled = false;
+      publishButton.disabled =
+        false;
 
       publishButton.textContent =
         "Publish Post";
