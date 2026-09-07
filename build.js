@@ -1489,28 +1489,35 @@ function buildCategories(
 
 
     /*
-     * Replace category post list.
-     */
+ * Replace category post list.
+ */
 
-    html =
-      html.replace(
-        /<div[^>]*id=["']categoryPostList["'][^>]*>[\s\S]*?<\/div>/i,
+html =
+  replaceBetweenMarkers(
+    html,
 
-        `<div id="categoryPostList" class="post-list">${categoryPostsHtml}</div>`
-      );
+    "<!-- CATEGORY_POSTS_START -->",
+
+    "<!-- CATEGORY_POSTS_END -->",
+
+    categoryPostsHtml
+  );
 
 
-    /*
-     * Replace category sidebar.
-     */
+/*
+ * Replace category sidebar.
+ */
 
-    html =
-      html.replace(
-        /<div[^>]*id=["']categorySidebar["'][^>]*>[\s\S]*?<\/div>/i,
+html =
+  replaceBetweenMarkers(
+    html,
 
-        `<div id="categorySidebar" class="category-sidebar-list">${sidebarHtml}</div>`
-      );
+    "<!-- CATEGORY_SIDEBAR_START -->",
 
+    "<!-- CATEGORY_SIDEBAR_END -->",
+
+    sidebarHtml
+  );
 
     /*
      * Write:
