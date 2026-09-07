@@ -30,30 +30,30 @@
   >
 
   <style>
-    /* =========================================
-       CATEGORY PAGE
-       ========================================= */
+  /* =========================================
+     CATEGORY PAGE
+     ========================================= */
 
-    .category-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 280px;
-      gap: 44px;
-      align-items: start;
-    }
+  .category-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 44px;
+    align-items: start;
+  }
 
-    .category-posts {
-      min-width: 0;
-    }
+  .category-posts {
+    min-width: 0;
+  }
 
-    .category-sidebar {
-      width: 100%;
-    }
+  .category-sidebar {
+    width: 100%;
+  }
 
-    /*
-     * White sidebar card
-     */
+  /*
+   * White sidebar card
+   */
 
-    .sidebar-section {
+  .sidebar-section {
       padding: 22px;
       background: #ffffff;
       border: 1px solid #e7e5e4;
@@ -79,195 +79,168 @@
       gap: 9px;
     }
 
-    /*
-     * Category rows
-     */
+  
 
-    .category-sidebar-item {
-      position: relative;
+  /*
+   * Category rows
+   */
 
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
+  .category-sidebar-item {
+    position: relative;
 
-      min-height: 48px;
-      padding: 11px 12px 11px 17px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
 
-      border-radius: 9px;
+    min-height: 48px;
+    padding: 11px 12px 11px 17px;
 
-      background: #f5f5f4;
-      color: #1c1917;
+    border-radius: 9px;
 
-      text-decoration: none;
+    background: #f5f5f4;
+    color: #1c1917;
 
-      font-size: 15px;
-      font-weight: 700;
+    text-decoration: none;
 
-      overflow: hidden;
+    font-size: 15px;
+    font-weight: 700;
 
-      transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease,
-        background 0.2s ease;
+    overflow: hidden;
+
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease;
+  }
+
+  /*
+   * Colored accent
+   */
+
+  .category-sidebar-item::before {
+    content: "";
+
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+
+    width: 4px;
+
+    background: #f59e0b;
+  }
+
+  .category-sidebar-item:nth-child(2)::before {
+    background: #3b82f6;
+  }
+
+  .category-sidebar-item:nth-child(3)::before {
+    background: #10b981;
+  }
+
+  .category-sidebar-item:nth-child(4)::before {
+    background: #8b5cf6;
+  }
+
+  .category-sidebar-item:nth-child(5)::before {
+    background: #ef4444;
+  }
+
+  .category-sidebar-item:nth-child(6)::before {
+    background: #ec4899;
+  }
+
+  .category-sidebar-item:nth-child(7)::before {
+    background: #14b8a6;
+  }
+
+  .category-sidebar-item:nth-child(8)::before {
+    background: #f97316;
+  }
+
+  /*
+   * Hover
+   */
+
+  .category-sidebar-item:hover {
+    background: #fafaf9;
+
+    transform: translateX(3px);
+
+    box-shadow:
+      0 4px 12px rgba(28, 25, 23, 0.08);
+  }
+
+  /*
+   * Category name
+   */
+
+  .category-sidebar-item span:first-child {
+    min-width: 0;
+  }
+
+  /*
+   * Post count badge
+   */
+
+  .category-sidebar-item span:last-child {
+    flex-shrink: 0;
+
+    min-width: 28px;
+    height: 24px;
+
+    padding: 0 8px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 999px;
+
+    background: #ffffff;
+    color: #78716c;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    line-height: 1;
+  }
+
+  /*
+   * Active category
+   */
+
+  .category-sidebar-item.active {
+    background: #fef3c7;
+    color: #92400e;
+
+    box-shadow:
+      0 3px 10px rgba(245, 158, 11, 0.12);
+  }
+
+  .category-sidebar-item.active span:last-child {
+    background: #f59e0b;
+    color: #1c1917;
+  }
+
+  /*
+   * Mobile
+   */
+
+  @media (max-width: 800px) {
+
+    .category-layout {
+      grid-template-columns: 1fr;
+      gap: 32px;
     }
 
-    /*
-     * Colored accent
-     */
-
-    .category-sidebar-item::before {
-      content: "";
-
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-
-      width: 4px;
-
-      background: #f59e0b;
+    .category-sidebar {
+      order: 2;
     }
 
-    .category-sidebar-item:nth-child(2)::before {
-      background: #3b82f6;
-    }
-
-    .category-sidebar-item:nth-child(3)::before {
-      background: #10b981;
-    }
-
-    .category-sidebar-item:nth-child(4)::before {
-      background: #8b5cf6;
-    }
-
-    .category-sidebar-item:nth-child(5)::before {
-      background: #ef4444;
-    }
-
-    .category-sidebar-item:nth-child(6)::before {
-      background: #ec4899;
-    }
-
-    .category-sidebar-item:nth-child(7)::before {
-      background: #14b8a6;
-    }
-
-    .category-sidebar-item:nth-child(8)::before {
-      background: #f97316;
-    }
-
-    /*
-     * Hover
-     */
-
-    .category-sidebar-item:hover {
-      background: #fafaf9;
-
-      transform: translateX(3px);
-
-      box-shadow:
-        0 4px 12px rgba(28, 25, 23, 0.08);
-    }
-
-    /*
-     * Category name
-     */
-
-    .category-sidebar-item span:first-child {
-      min-width: 0;
-    }
-
-    /*
-     * Post count badge
-     */
-
-    .category-sidebar-item span:last-child {
-      flex-shrink: 0;
-
-      min-width: 28px;
-      height: 24px;
-
-      padding: 0 8px;
-
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-
-      border-radius: 999px;
-
-      background: #ffffff;
-      color: #78716c;
-
-      font-size: 12px;
-      font-weight: 800;
-
-      line-height: 1;
-    }
-
-    /*
-     * Active category
-     */
-
-    .category-sidebar-item.active {
-      background: #fef3c7;
-      color: #92400e;
-
-      box-shadow:
-        0 3px 10px rgba(245, 158, 11, 0.12);
-    }
-
-    .category-sidebar-item.active span:last-child {
-      background: #f59e0b;
-      color: #1c1917;
-    }
-
-    /*
-     * Mobile
-     */
-
-    @media (max-width: 800px) {
-
-      .category-layout {
-        grid-template-columns: 1fr;
-        gap: 32px;
-      }
-
-      .category-sidebar {
-        order: 2;
-      }
-
-    }
-
-
-    /*
-     * Post sidebar category widget
-     */
-
-    .sidebar .widget + .widget {
-      margin-top: 28px;
-    }
-
-    .sidebar .widget:has(.category-sidebar-list) {
-      padding: 22px;
-      background: #ffffff;
-      border: 1px solid #e7e5e4;
-      border-radius: 14px;
-      box-shadow: 0 4px 18px rgba(28, 25, 23, 0.06);
-    }
-
-    .sidebar .widget:has(.category-sidebar-list) .widget-title {
-      margin: 0 0 18px;
-      padding-bottom: 14px;
-
-      border-bottom: 1px solid #e7e5e4;
-
-      font-size: 18px;
-      line-height: 1.3;
-      font-weight: 700;
-      color: #1c1917;
-    }
-  </style>
+  }
+</style>
 
 </head>
 
