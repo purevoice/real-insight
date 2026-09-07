@@ -608,6 +608,93 @@ function renderRecentPosts(
 
 
 /* =========================================
+   POST SIDEBAR CATEGORIES
+   ========================================= */
+
+function renderCategorySidebar(
+  allPosts
+) {
+
+  const categories = {};
+
+
+  allPosts.forEach(function(post) {
+
+    const categoryName =
+      post.category || "Uncategorized";
+
+
+    const categorySlug =
+      createCategorySlug(
+        categoryName
+      );
+
+
+    if (!categorySlug) {
+
+      return;
+
+    }
+
+
+    if (!categories[categorySlug]) {
+
+      categories[categorySlug] = {
+
+        name:
+          categoryName,
+
+        slug:
+          categorySlug,
+
+        count:
+          0
+
+      };
+
+    }
+
+
+    categories[categorySlug].count++;
+
+  });
+
+
+  return Object.values(
+    categories
+  )
+  .sort(function(a, b) {
+
+    return a.name.localeCompare(
+      b.name
+    );
+
+  })
+  .map(function(category) {
+
+    return `
+<a
+  href="/category/${encodeURIComponent(category.slug)}/"
+  class="category-sidebar-item"
+>
+
+  <span>
+    ${escapeHtml(category.name)}
+  </span>
+
+  <span>
+    ${category.count}
+  </span>
+
+</a>`;
+
+  })
+  .join("\n");
+
+}
+
+
+/* =========================================
    POST NAVIGATION
    ========================================= */
 
@@ -788,11 +875,13 @@ function renderPost(
       )
     );
 
+
   html =
-  html.replaceAll(
-    "{{CATEGORY_URL}}",
-    `/category/${createCategorySlug(post.category)}/`
-  );
+    html.replaceAll(
+      "{{CATEGORY_URL}}",
+      `/category/${createCategorySlug(post.category)}/`
+    );
+
 
   html =
     html.replaceAll(
@@ -842,6 +931,15 @@ function renderPost(
     html.replaceAll(
       "{{RECENT_POSTS}}",
       renderRecentPosts(
+        allPosts
+      )
+    );
+
+
+  html =
+    html.replaceAll(
+      "{{CATEGORY_SIDEBAR}}",
+      renderCategorySidebar(
         allPosts
       )
     );
@@ -1494,35 +1592,36 @@ function buildCategories(
 
 
     /*
- * Replace category post list.
- */
+     * Replace category post list.
+     */
 
-html =
-  replaceBetweenMarkers(
-    html,
+    html =
+      replaceBetweenMarkers(
+        html,
 
-    "<!-- CATEGORY_POSTS_START -->",
+        "<!-- CATEGORY_POSTS_START -->",
 
-    "<!-- CATEGORY_POSTS_END -->",
+        "<!-- CATEGORY_POSTS_END -->",
 
-    categoryPostsHtml
-  );
+        categoryPostsHtml
+      );
 
 
-/*
- * Replace category sidebar.
- */
+    /*
+     * Replace category sidebar.
+     */
 
-html =
-  replaceBetweenMarkers(
-    html,
+    html =
+      replaceBetweenMarkers(
+        html,
 
-    "<!-- CATEGORY_SIDEBAR_START -->",
+        "<!-- CATEGORY_SIDEBAR_START -->",
 
-    "<!-- CATEGORY_SIDEBAR_END -->",
+        "<!-- CATEGORY_SIDEBAR_END -->",
 
-    sidebarHtml
-  );
+        sidebarHtml
+      );
+
 
     /*
      * Write:
