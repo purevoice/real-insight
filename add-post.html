@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -6,10 +7,11 @@
 
   <title>Add New Post | Real Insight</title>
 
-  <meta
-    name="robots"
-    content="noindex,nofollow"
-  >
+<meta
+name="robots"
+content="noindex,nofollow"
+
+>
 
   <link rel="stylesheet" href="/style.css">
 </head>
@@ -19,395 +21,479 @@
 <header>
   <div class="nav-container">
 
-    <a href="/" class="logo">
-      Real Insight<span class="logo-dot"></span>
-    </a>
+```
+<a href="/" class="logo">
+  Real Insight<span class="logo-dot"></span>
+</a>
 
-    <nav class="nav-links" id="navLinks">
+<nav class="nav-links" id="navLinks">
 
-      <a href="/">
-        Home
-      </a>
+  <a href="/">
+    Home
+  </a>
 
-      <a href="/categories">
-        Categories
-      </a>
+  <a href="/categories">
+    Categories
+  </a>
 
-      <a href="/add-post" class="active">
-        Add New Post
-      </a>
+  <a href="/add-post" class="active">
+    Add New Post
+  </a>
 
-    </nav>
+</nav>
 
-    <button
-      class="menu-toggle"
-      id="menuToggle"
-      aria-label="Toggle navigation"
-      aria-expanded="false"
-    >
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
+<button
+  class="menu-toggle"
+  id="menuToggle"
+  aria-label="Toggle navigation"
+  aria-expanded="false"
+>
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+```
 
   </div>
 </header>
-
 
 <main>
 
   <section class="form-container">
 
-    <div class="page-intro">
+```
+<div class="page-intro">
 
-      <h1>
-        Add New Post
-      </h1>
+  <h1>
+    Add New Post
+  </h1>
 
-      <p>
-        Write, format and publish a new article.
-      </p>
+  <p>
+    Write, format and publish a new article.
+  </p>
+
+</div>
+
+
+<form
+  id="postForm"
+  class="post-form"
+  novalidate
+>
+
+  <!-- TITLE -->
+
+  <div class="form-group">
+
+    <label for="title">
+      Title
+    </label>
+
+    <input
+      id="title"
+      name="title"
+      type="text"
+      autocomplete="off"
+      required
+      placeholder="Enter your post title"
+    >
+
+  </div>
+
+
+  <!-- SLUG -->
+
+  <div class="form-group">
+
+    <label>
+      URL
+    </label>
+
+    <div class="slug-preview">
+
+      <span>
+        https://realinsight.netlify.app/
+      </span>
+
+      <strong id="slugPreview">
+        your-post-title
+      </strong>
+
+    </div>
+
+    <input
+      id="slug"
+      name="slug"
+      type="hidden"
+    >
+
+    <small class="editor-help">
+      The URL is generated automatically from the title.
+    </small>
+
+  </div>
+
+
+  <!-- CATEGORY + READING TIME -->
+
+  <div class="form-row">
+
+    <div class="form-group">
+
+      <label for="category">
+        Category
+      </label>
+
+      <input
+        id="category"
+        name="category"
+        type="text"
+        required
+        placeholder="News"
+      >
 
     </div>
 
 
-    <form
-      id="postForm"
-      class="post-form"
-      novalidate
-    >
+    <div class="form-group">
 
-      <!-- TITLE -->
+      <label for="readingTime">
+        Reading time
+      </label>
 
-      <div class="form-group">
+      <input
+        id="readingTime"
+        name="readingTime"
+        type="text"
+        placeholder="5 min read"
+      >
 
-        <label for="title">
-          Title
-        </label>
+    </div>
 
-        <input
-          id="title"
-          name="title"
-          type="text"
-          autocomplete="off"
-          required
-          placeholder="Enter your post title"
+  </div>
+
+
+  <!-- EXCERPT -->
+
+  <div class="form-group">
+
+    <label for="excerpt">
+      Excerpt
+    </label>
+
+    <textarea
+      id="excerpt"
+      name="excerpt"
+      rows="4"
+      required
+      placeholder="Write a short description of the article..."
+    ></textarea>
+
+  </div>
+
+
+  <!-- CONTENT -->
+
+  <div class="form-group">
+
+    <label for="contentEditor">
+      Post content
+    </label>
+
+
+    <div class="editor-wrapper">
+
+
+      <div
+        class="editor-toolbar"
+        role="toolbar"
+        aria-label="Post formatting"
+      >
+
+        <!-- FORMAT -->
+
+        <select
+          id="formatBlock"
+          aria-label="Text style"
+          title="Text style"
         >
+          <option value="p">Paragraph</option>
+          <option value="h1">Heading 1</option>
+          <option value="h2">Heading 2</option>
+          <option value="h3">Heading 3</option>
+          <option value="h4">Heading 4</option>
+          <option value="h5">Heading 5</option>
+          <option value="h6">Heading 6</option>
+        </select>
 
-      </div>
+
+        <span class="toolbar-separator"></span>
 
 
-      <!-- SLUG -->
+        <!-- TEXT FORMATTING -->
 
-      <div class="form-group">
-
-        <label>
-          URL
-        </label>
-
-        <div class="slug-preview">
-
-          <span>
-            https://realinsight.netlify.app/
-          </span>
-
-          <strong id="slugPreview">
-            your-post-title
-          </strong>
-
-        </div>
-
-        <input
-          id="slug"
-          name="slug"
-          type="hidden"
+        <button
+          type="button"
+          data-command="bold"
+          title="Bold"
+          aria-label="Bold"
         >
-
-        <small class="editor-help">
-          The URL is generated automatically from the title.
-        </small>
-
-      </div>
-
-
-      <!-- CATEGORY + READING TIME -->
-
-      <div class="form-row">
-
-        <div class="form-group">
-
-          <label for="category">
-            Category
-          </label>
-
-          <input
-            id="category"
-            name="category"
-            type="text"
-            required
-            placeholder="News"
-          >
-
-        </div>
-
-
-        <div class="form-group">
-
-          <label for="readingTime">
-            Reading time
-          </label>
-
-          <input
-            id="readingTime"
-            name="readingTime"
-            type="text"
-            placeholder="5 min read"
-          >
-
-        </div>
-
-      </div>
-
-
-      <!-- EXCERPT -->
-
-      <div class="form-group">
-
-        <label for="excerpt">
-          Excerpt
-        </label>
-
-        <textarea
-          id="excerpt"
-          name="excerpt"
-          rows="4"
-          required
-          placeholder="Write a short description of the article..."
-        ></textarea>
-
-      </div>
-
-
-      <!-- CONTENT -->
-
-      <div class="form-group">
-
-        <label for="contentEditor">
-          Post content
-        </label>
-
-
-        <div class="editor-wrapper">
-
-
-          <div
-            class="editor-toolbar"
-            role="toolbar"
-            aria-label="Post formatting"
-          >
-
-            <select
-              id="formatBlock"
-              aria-label="Text style"
-            >
-              <option value="p">
-                Paragraph
-              </option>
-
-              <option value="h2">
-                Heading 2
-              </option>
-
-              <option value="h3">
-                Heading 3
-              </option>
-
-              <option value="h4">
-                Heading 4
-              </option>
-            </select>
-
-
-            <span class="toolbar-separator"></span>
-
-
-            <button
-              type="button"
-              data-command="bold"
-              title="Bold"
-            >
-              B
-            </button>
-
-            <button
-              type="button"
-              data-command="italic"
-              title="Italic"
-            >
-              <em>I</em>
-            </button>
-
-            <button
-              type="button"
-              data-command="underline"
-              title="Underline"
-            >
-              <u>U</u>
-            </button>
-
-
-            <span class="toolbar-separator"></span>
-
-
-            <button
-              type="button"
-              data-command="insertUnorderedList"
-              title="Bullet list"
-            >
-              • List
-            </button>
-
-            <button
-              type="button"
-              data-command="insertOrderedList"
-              title="Numbered list"
-            >
-              1. List
-            </button>
-
-
-            <span class="toolbar-separator"></span>
-
-
-            <button
-              type="button"
-              id="blockquoteButton"
-              title="Blockquote"
-            >
-              Quote
-            </button>
-
-            <button
-              type="button"
-              id="linkButton"
-              title="Insert link"
-            >
-              Link
-            </button>
-
-            <button
-              type="button"
-              id="horizontalRuleButton"
-              title="Horizontal line"
-            >
-              HR
-            </button>
-
-
-            <span class="toolbar-separator"></span>
-
-
-            <button
-              type="button"
-              data-command="removeFormat"
-              title="Clear formatting"
-            >
-              Clear
-            </button>
-
-          </div>
-
-
-          <div
-            id="contentEditor"
-            class="rich-editor"
-            contenteditable="true"
-            role="textbox"
-            aria-multiline="true"
-            data-placeholder="Start writing your article..."
-          ></div>
-
-        </div>
-
-
-        <textarea
-          id="content"
-          name="content"
-          hidden
-        ></textarea>
-
-
-        <small class="editor-help">
-          Use the toolbar to format headings, text, lists, links and quotes.
-        </small>
-
-      </div>
-
-
-      <!-- TAGS -->
-
-      <div class="form-group">
-
-        <label for="tags">
-          Tags
-        </label>
-
-        <input
-          id="tags"
-          name="tags"
-          type="text"
-          placeholder="news, world, politics"
+          <strong>B</strong>
+        </button>
+
+        <button
+          type="button"
+          data-command="italic"
+          title="Italic"
+          aria-label="Italic"
         >
+          <em>I</em>
+        </button>
 
-        <small class="editor-help">
-          Separate tags with commas.
-        </small>
-
-      </div>
-
-
-      <!-- ACCESS CODE -->
-
-      <div class="form-group">
-
-        <label for="accessCode">
-          Access code
-        </label>
-
-        <input
-          id="accessCode"
-          name="accessCode"
-          type="password"
-          required
-          autocomplete="off"
-          placeholder="Enter publishing access code"
+        <button
+          type="button"
+          data-command="underline"
+          title="Underline"
+          aria-label="Underline"
         >
+          <u>U</u>
+        </button>
+
+        <button
+          type="button"
+          data-command="strikeThrough"
+          title="Strikethrough"
+          aria-label="Strikethrough"
+        >
+          <s>S</s>
+        </button>
+
+
+        <span class="toolbar-separator"></span>
+
+
+        <!-- LISTS -->
+
+        <button
+          type="button"
+          data-command="insertUnorderedList"
+          title="Bulleted list"
+          aria-label="Bulleted list"
+        >
+          ☷
+        </button>
+
+        <button
+          type="button"
+          data-command="insertOrderedList"
+          title="Numbered list"
+          aria-label="Numbered list"
+        >
+          ☰
+        </button>
+
+
+        <span class="toolbar-separator"></span>
+
+
+        <!-- ALIGNMENT -->
+
+        <button
+          type="button"
+          data-command="justifyLeft"
+          title="Align left"
+          aria-label="Align left"
+        >
+          ≡
+        </button>
+
+        <button
+          type="button"
+          data-command="justifyCenter"
+          title="Align center"
+          aria-label="Align center"
+        >
+          ≡
+        </button>
+
+        <button
+          type="button"
+          data-command="justifyRight"
+          title="Align right"
+          aria-label="Align right"
+        >
+          ≡
+        </button>
+
+
+        <span class="toolbar-separator"></span>
+
+
+        <!-- INSERT -->
+
+        <button
+          type="button"
+          id="blockquoteButton"
+          title="Blockquote"
+          aria-label="Blockquote"
+        >
+          “
+        </button>
+
+        <button
+          type="button"
+          id="linkButton"
+          title="Insert link"
+          aria-label="Insert link"
+        >
+          🔗
+        </button>
+
+        <button
+          type="button"
+          id="imageButton"
+          title="Insert image"
+          aria-label="Insert image"
+        >
+          🖼
+        </button>
+
+        <button
+          type="button"
+          id="horizontalRuleButton"
+          title="Horizontal line"
+          aria-label="Horizontal line"
+        >
+          ─
+        </button>
+
+
+        <span class="toolbar-separator"></span>
+
+
+        <!-- HISTORY -->
+
+        <button
+          type="button"
+          data-command="undo"
+          title="Undo"
+          aria-label="Undo"
+        >
+          ↶
+        </button>
+
+        <button
+          type="button"
+          data-command="redo"
+          title="Redo"
+          aria-label="Redo"
+        >
+          ↷
+        </button>
+
+
+        <button
+          type="button"
+          data-command="removeFormat"
+          title="Clear formatting"
+          aria-label="Clear formatting"
+        >
+          Tx
+        </button>
 
       </div>
 
 
       <div
-        id="formMessage"
-        class="form-message"
-        role="status"
-        aria-live="polite"
+        id="contentEditor"
+        class="rich-editor"
+        contenteditable="true"
+        role="textbox"
+        aria-multiline="true"
+        data-placeholder="Start writing your article..."
       ></div>
 
+    </div>
 
-      <button
-        type="submit"
-        class="primary-button"
-        id="publishButton"
-      >
-        Publish Post
-      </button>
 
-    </form>
+    <textarea
+      id="content"
+      name="content"
+      hidden
+    ></textarea>
+
+
+    <small class="editor-help">
+      Use the toolbar to format headings, text, lists, links, images and quotes.
+    </small>
+
+  </div>
+
+
+  <!-- TAGS -->
+
+  <div class="form-group">
+
+    <label for="tags">
+      Tags
+    </label>
+
+    <input
+      id="tags"
+      name="tags"
+      type="text"
+      placeholder="news, world, politics"
+    >
+
+    <small class="editor-help">
+      Separate tags with commas.
+    </small>
+
+  </div>
+
+
+  <!-- ACCESS CODE -->
+
+  <div class="form-group">
+
+    <label for="accessCode">
+      Access code
+    </label>
+
+    <input
+      id="accessCode"
+      name="accessCode"
+      type="password"
+      required
+      autocomplete="off"
+      placeholder="Enter publishing access code"
+    >
+
+  </div>
+
+
+  <div
+    id="formMessage"
+    class="form-message"
+    role="status"
+    aria-live="polite"
+  ></div>
+
+
+  <button
+    type="submit"
+    class="primary-button"
+    id="publishButton"
+  >
+    Publish Post
+  </button>
+
+</form>
+```
 
   </section>
 
 </main>
-
 
 <footer>
 
@@ -420,8 +506,73 @@
 
 </footer>
 
+<!-- IMAGE INSERT DIALOG -->
+
+<dialog id="imageDialog" class="editor-dialog">
+
+  <form method="dialog">
+
+```
+<h3>
+  Insert Image
+</h3>
+
+<div class="form-group">
+
+  <label for="imageUrl">
+    Image URL
+  </label>
+
+  <input
+    id="imageUrl"
+    type="url"
+    placeholder="https://example.com/image.jpg"
+    autocomplete="off"
+  >
+
+</div>
+
+<div class="form-group">
+
+  <label for="imageAlt">
+    Alt text
+  </label>
+
+  <input
+    id="imageAlt"
+    type="text"
+    placeholder="Describe the image"
+    autocomplete="off"
+  >
+
+</div>
+
+<div class="editor-dialog-actions">
+
+  <button
+    type="button"
+    id="cancelImageButton"
+  >
+    Cancel
+  </button>
+
+  <button
+    type="button"
+    id="insertImageButton"
+    class="primary-button"
+  >
+    Insert Image
+  </button>
+
+</div>
+```
+
+  </form>
+
+</dialog>
 
 <script src="/app.js"></script>
+
 <script src="/add-post.js"></script>
 
 </body>

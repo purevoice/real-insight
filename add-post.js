@@ -56,7 +56,8 @@ function updateSlug() {
   const slug = generateSlug(titleInput.value);
 
   slugInput.value = slug;
-  slugPreview.textContent = slug || "your-post-title";
+  slugPreview.textContent =
+    slug || "your-post-title";
 }
 
 
@@ -79,17 +80,16 @@ function saveSelection() {
 
   const range = selection.getRangeAt(0);
 
-  if (
-    editor.contains(range.commonAncestorContainer)
-  ) {
+  if (editor.contains(range.commonAncestorContainer)) {
     savedRange = range.cloneRange();
   }
 }
 
 
 function restoreSelection() {
+  editor.focus();
+
   if (!savedRange) {
-    editor.focus();
     return;
   }
 
@@ -97,8 +97,6 @@ function restoreSelection() {
 
   selection.removeAllRanges();
   selection.addRange(savedRange);
-
-  editor.focus();
 }
 
 
@@ -117,12 +115,56 @@ editor.addEventListener(
   saveSelection
 );
 
+editor.addEventListener(
+  "input",
+  function() {
+    saveSelection();
+    syncContent();
+  }
+);
+
+
+/*
+ * Save the selection before the toolbar
+ * button takes focus away from the editor.
+ */
+
+document
+  .querySelectorAll(".editor-toolbar button")
+  .forEach(function(button) {
+
+    button.addEventListener(
+      "mousedown",
+      function(event) {
+        event.preventDefault();
+        saveSelection();
+      }
+    );
+
+  });
+
+
+/* =========================================
+   SYNC EDITOR CONTENT
+   ========================================= */
+
+function syncContent() {
+  contentInput.value =
+    cleanEditorHTML(
+      editor.innerHTML
+    );
+}
+
 
 /* =========================================
    FORMATTING
    ========================================= */
 
-function executeCommand(command, value = null) {
+function executeCommand(
+  command,
+  value = null
+) {
+
   restoreSelection();
 
   document.execCommand(
@@ -131,24 +173,23 @@ function executeCommand(command, value = null) {
     value
   );
 
+  syncContent();
+
   saveSelection();
 
   editor.focus();
 }
 
 
+/* =========================================
+   STANDARD TOOLBAR COMMANDS
+   ========================================= */
+
 document
   .querySelectorAll(
     ".editor-toolbar button[data-command]"
   )
   .forEach(function(button) {
-
-    button.addEventListener(
-      "mousedown",
-      function(event) {
-        event.preventDefault();
-      }
-    );
 
     button.addEventListener(
       "click",
@@ -172,17 +213,21 @@ const formatBlock =
   document.getElementById("formatBlock");
 
 
-formatBlock.addEventListener(
-  "change",
-  function() {
+if (formatBlock) {
 
-    executeCommand(
-      "formatBlock",
-      formatBlock.value
-    );
+  formatBlock.addEventListener(
+    "change",
+    function() {
 
-  }
-);
+      executeCommand(
+        "formatBlock",
+        formatBlock.value
+      );
+
+    }
+  );
+
+}
 
 
 /* =========================================
@@ -195,25 +240,60 @@ const blockquoteButton =
   );
 
 
-blockquoteButton.addEventListener(
-  "mousedown",
-  function(event) {
-    event.preventDefault();
-  }
-);
+if (blockquoteButton) {
 
+  blockquoteButton.addEventListener(
+    "click",
+    function() {
 
-blockquoteButton.addEventListener(
-  "click",
-  function() {
+      restoreSelection();
 
-    executeCommand(
-      "formatBlock",
-      "blockquote"
-    );
+      const selection =
+        window.getSelection();
 
-  }
-);
+      let node =
+        selection.anchorNode;
+
+      if (
+        node &&
+        node.nodeType === Node.TEXT_NODE
+      ) {
+        node = node.parentElement;
+      }
+
+      const existingBlockquote =
+        node &&
+        node.closest &&
+        node.closest("blockquote");
+
+      if (existingBlockquote) {
+
+        document.execCommand(
+          "formatBlock",
+          false,
+          "p"
+        );
+
+      } else {
+
+        document.execCommand(
+          "formatBlock",
+          false,
+          "blockquote"
+        );
+
+      }
+
+      syncContent();
+
+      saveSelection();
+
+      editor.focus();
+
+    }
+  );
+
+}
 
 
 /* =========================================
@@ -226,38 +306,325 @@ const linkButton =
   );
 
 
-linkButton.addEventListener(
-  "mousedown",
-  function(event) {
-    event.preventDefault();
-  }
-);
+if (linkButton) {
 
+  linkButton.addEventListener(
+    "click",
+    function() {
 
-linkButton.addEventListener(
-  "click",
-  function() {
+      restoreSelection();
 
-    restoreSelection();
+      const selection =
+        window.getSelection();
 
-    const url =
-      window.prompt(
-        "Enter the URL:",
-        "https://"
+      const selectedText =
+        selection
+          ? selection.toString()
+          : "";
+
+      const url =
+        window.prompt(
+          "Enter the URL:",
+          "https://"
+        );
+
+      if (!url) {
+        editor.focus();
+        return;
+      }
+
+      const trimmedUrl =
+        url.trim();
+
+      if (
+        !/^https?:\/\//i.test(
+          trimmedUrl
+        )
+      ) {
+        showError(
+          "Please enter a valid URL starting with http:// or https://."
+        );
+
+        editor.focus();
+        return;
+      }
+
+      executeCommand(
+        "createLink",
+        trimmedUrl
       );
 
-    if (!url) {
-      editor.focus();
-      return;
+      /*
+       * If there was no selected text,
+       * createLink has nothing to wrap.
+       * Insert the URL as linked text instead.
+       */
+
+      if (!selectedText) {
+
+        restoreSelection();
+
+        const link =
+          document.createElement("a");
+
+        link.href =
+          trimmedUrl;
+
+        link.target =
+          "_blank";
+
+        link.rel =
+          "noopener noreferrer";
+
+        link.textContent =
+          trimmedUrl;
+
+        const selectionNow =
+          window.getSelection();
+
+        if (
+          selectionNow &&
+          selectionNow.rangeCount
+        ) {
+
+          const range =
+            selectionNow.getRangeAt(0);
+
+          range.deleteContents();
+
+          range.insertNode(link);
+
+          range.setStartAfter(link);
+          range.collapse(true);
+
+          selectionNow.removeAllRanges();
+          selectionNow.addRange(range);
+
+        }
+
+        syncContent();
+
+      }
+
     }
+  );
 
-    executeCommand(
-      "createLink",
-      url
-    );
+}
 
-  }
-);
+
+/* =========================================
+   REMOVE LINK
+   ========================================= */
+
+const unlinkButton =
+  document.querySelector(
+    '[data-command="unlink"]'
+  );
+
+
+if (unlinkButton) {
+
+  unlinkButton.addEventListener(
+    "click",
+    function() {
+
+      executeCommand("unlink");
+
+    }
+  );
+
+}
+
+
+/* =========================================
+   IMAGE INSERTION
+   ========================================= */
+
+const imageButton =
+  document.getElementById(
+    "imageButton"
+  );
+
+const imageDialog =
+  document.getElementById(
+    "imageDialog"
+  );
+
+const imageUrlInput =
+  document.getElementById(
+    "imageUrl"
+  );
+
+const imageAltInput =
+  document.getElementById(
+    "imageAlt"
+  );
+
+const cancelImageButton =
+  document.getElementById(
+    "cancelImageButton"
+  );
+
+const insertImageButton =
+  document.getElementById(
+    "insertImageButton"
+  );
+
+
+if (
+  imageButton &&
+  imageDialog
+) {
+
+  imageButton.addEventListener(
+    "click",
+    function() {
+
+      saveSelection();
+
+      imageUrlInput.value = "";
+      imageAltInput.value = "";
+
+      imageDialog.showModal();
+
+      setTimeout(
+        function() {
+          imageUrlInput.focus();
+        },
+        50
+      );
+
+    }
+  );
+
+}
+
+
+if (cancelImageButton) {
+
+  cancelImageButton.addEventListener(
+    "click",
+    function() {
+
+      imageDialog.close();
+
+      editor.focus();
+
+    }
+  );
+
+}
+
+
+if (insertImageButton) {
+
+  insertImageButton.addEventListener(
+    "click",
+    function() {
+
+      const url =
+        imageUrlInput.value.trim();
+
+      const alt =
+        imageAltInput.value.trim();
+
+      if (!url) {
+
+        imageUrlInput.focus();
+
+        return;
+
+      }
+
+      if (
+        !/^https?:\/\//i.test(url)
+      ) {
+
+        showError(
+          "Please enter a valid image URL starting with http:// or https://."
+        );
+
+        imageUrlInput.focus();
+
+        return;
+
+      }
+
+      restoreSelection();
+
+      const image =
+        document.createElement("img");
+
+      image.src = url;
+      image.alt = alt;
+
+      /*
+       * Keep images responsive inside
+       * the published article.
+       */
+
+      image.loading = "lazy";
+
+      image.style.maxWidth = "100%";
+      image.style.height = "auto";
+
+      const selection =
+        window.getSelection();
+
+      if (
+        selection &&
+        selection.rangeCount
+      ) {
+
+        const range =
+          selection.getRangeAt(0);
+
+        range.deleteContents();
+
+        /*
+         * Add a paragraph before/after the
+         * image when needed so images don't
+         * run directly into surrounding text.
+         */
+
+        const paragraph =
+          document.createElement("p");
+
+        paragraph.appendChild(image);
+
+        range.insertNode(paragraph);
+
+        range.setStartAfter(paragraph);
+        range.collapse(true);
+
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+      } else {
+
+        editor.appendChild(
+          document.createElement("p")
+        );
+
+        const paragraph =
+          editor.lastElementChild;
+
+        paragraph.appendChild(image);
+
+      }
+
+      syncContent();
+
+      imageDialog.close();
+
+      saveSelection();
+
+      editor.focus();
+
+    }
+  );
+
+}
 
 
 /* =========================================
@@ -270,24 +637,63 @@ const horizontalRuleButton =
   );
 
 
-horizontalRuleButton.addEventListener(
-  "mousedown",
-  function(event) {
-    event.preventDefault();
-  }
-);
+if (horizontalRuleButton) {
+
+  horizontalRuleButton.addEventListener(
+    "click",
+    function() {
+
+      executeCommand(
+        "insertHorizontalRule"
+      );
+
+    }
+  );
+
+}
 
 
-horizontalRuleButton.addEventListener(
-  "click",
-  function() {
+/* =========================================
+   UNDO / REDO
+   ========================================= */
 
-    executeCommand(
-      "insertHorizontalRule"
-    );
+const undoButton =
+  document.getElementById(
+    "undoButton"
+  );
 
-  }
-);
+const redoButton =
+  document.getElementById(
+    "redoButton"
+  );
+
+
+if (undoButton) {
+
+  undoButton.addEventListener(
+    "click",
+    function() {
+
+      executeCommand("undo");
+
+    }
+  );
+
+}
+
+
+if (redoButton) {
+
+  redoButton.addEventListener(
+    "click",
+    function() {
+
+      executeCommand("redo");
+
+    }
+  );
+
+}
 
 
 /* =========================================
@@ -300,6 +706,11 @@ function cleanEditorHTML(html) {
     document.createElement("div");
 
   container.innerHTML = html;
+
+
+  /*
+   * Remove unwanted editor attributes.
+   */
 
   container
     .querySelectorAll(
@@ -317,20 +728,51 @@ function cleanEditorHTML(html) {
       if (
         element.classList.contains("lead")
       ) {
+
         element.setAttribute(
           "class",
           "lead"
         );
+
       } else {
+
         element.removeAttribute("class");
+
       }
 
     });
 
 
+  /*
+   * Clean links.
+   */
+
   container
     .querySelectorAll("a")
     .forEach(function(link) {
+
+      const href =
+        link.getAttribute("href") || "";
+
+      /*
+       * Remove dangerous URLs.
+       */
+
+      if (
+        /^(javascript|data|vbscript):/i.test(
+          href.trim()
+        )
+      ) {
+
+        link.replaceWith(
+          document.createTextNode(
+            link.textContent
+          )
+        );
+
+        return;
+
+      }
 
       link.setAttribute(
         "target",
@@ -341,6 +783,57 @@ function cleanEditorHTML(html) {
         "rel",
         "noopener noreferrer"
       );
+
+    });
+
+
+  /*
+   * Clean images.
+   */
+
+  container
+    .querySelectorAll("img")
+    .forEach(function(image) {
+
+      const src =
+        image.getAttribute("src") || "";
+
+      if (
+        /^(javascript|data|vbscript):/i.test(
+          src.trim()
+        )
+      ) {
+
+        image.remove();
+
+        return;
+
+      }
+
+      image.removeAttribute("style");
+      image.removeAttribute("class");
+
+      image.setAttribute(
+        "loading",
+        "lazy"
+      );
+
+      /*
+       * Always keep an alt attribute,
+       * even when the editor user leaves
+       * it empty.
+       */
+
+      if (
+        !image.hasAttribute("alt")
+      ) {
+
+        image.setAttribute(
+          "alt",
+          ""
+        );
+
+      }
 
     });
 
@@ -391,7 +884,17 @@ form.addEventListener(
     event.preventDefault();
 
     message.textContent = "";
-    message.className = "form-message";
+    message.className =
+      "form-message";
+
+
+    /*
+     * Always sync the editor immediately
+     * before collecting the post content.
+     */
+
+    syncContent();
+
 
     const title =
       titleInput.value.trim();
@@ -423,43 +926,78 @@ form.addEventListener(
 
 
     if (!title) {
-      showError("Please enter a title.");
+
+      showError(
+        "Please enter a title."
+      );
+
       titleInput.focus();
+
       return;
+
     }
 
 
     if (!slug) {
-      showError("A valid URL could not be generated from the title.");
+
+      showError(
+        "A valid URL could not be generated from the title."
+      );
+
       return;
+
     }
 
 
     if (!category) {
-      showError("Please enter a category.");
+
+      showError(
+        "Please enter a category."
+      );
+
       categoryInput.focus();
+
       return;
+
     }
 
 
     if (!excerpt) {
-      showError("Please enter an excerpt.");
+
+      showError(
+        "Please enter an excerpt."
+      );
+
       excerptInput.focus();
+
       return;
+
     }
 
 
     if (!content) {
-      showError("Please write the post content.");
+
+      showError(
+        "Please write the post content."
+      );
+
       editor.focus();
+
       return;
+
     }
 
 
     if (!accessCode) {
-      showError("Please enter the access code.");
+
+      showError(
+        "Please enter the access code."
+      );
+
       accessCodeInput.focus();
+
       return;
+
     }
 
 
@@ -493,6 +1031,7 @@ form.addEventListener(
 
 
     publishButton.disabled = true;
+
     publishButton.textContent =
       "Publishing...";
 
@@ -521,24 +1060,35 @@ form.addEventListener(
       let result;
 
       try {
-        result = await response.json();
+
+        result =
+          await response.json();
+
       } catch {
+
         throw new Error(
           "The publishing server returned an invalid response."
         );
+
       }
 
 
-      if (!response.ok || !result.success) {
+      if (
+        !response.ok ||
+        !result.success
+      ) {
+
         throw new Error(
           result.message ||
           "Publishing failed."
         );
+
       }
 
 
       message.className =
         "form-message success";
+
 
       message.innerHTML =
         `
@@ -559,9 +1109,14 @@ form.addEventListener(
 
       editor.innerHTML = "";
 
+      contentInput.value = "";
+
       slugInput.value = "";
+
       slugPreview.textContent =
         "your-post-title";
+
+      savedRange = null;
 
 
     } catch (error) {
