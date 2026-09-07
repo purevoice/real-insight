@@ -788,6 +788,11 @@ function renderPost(
       )
     );
 
+  html =
+  html.replaceAll(
+    "{{CATEGORY_URL}}",
+    `/category/${createCategorySlug(post.category)}/`
+  );
 
   html =
     html.replaceAll(
