@@ -1405,11 +1405,13 @@ footer strong {
   flex-wrap: wrap;
   align-items: center;
   gap: 5px;
+  width: 100%;
   padding: 8px;
   background: #f8f8f7;
   border: 1px solid #d6d3d1;
   border-bottom: 0;
   border-radius: 8px 8px 0 0;
+  box-sizing: border-box;
 }
 
 
@@ -1427,7 +1429,19 @@ footer strong {
   color: #292524;
   font-family: inherit;
   font-size: 14px;
+  line-height: 1;
   cursor: pointer;
+  box-sizing: border-box;
+}
+
+.editor-toolbar select:hover {
+  border-color: #a8a29e;
+}
+
+.editor-toolbar select:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
 }
 
 
@@ -1439,20 +1453,24 @@ footer strong {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
+  min-width: 38px;
   height: 38px;
-  padding: 0;
+  padding: 0 9px;
   border: 1px solid #d6d3d1;
   border-radius: 5px;
   background: #ffffff;
   color: #292524;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 500;
   line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
+  box-sizing: border-box;
   transition:
     background 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .editor-toolbar button:hover {
@@ -1464,10 +1482,30 @@ footer strong {
   background: #e7e5e4;
 }
 
-.editor-toolbar button:focus-visible,
-.editor-toolbar select:focus-visible {
+.editor-toolbar button:focus-visible {
   outline: 2px solid #f59e0b;
   outline-offset: 1px;
+}
+
+
+/* =========================================
+   TEXT FORMAT BUTTONS
+   ========================================= */
+
+.editor-toolbar button[data-command="bold"] {
+  font-size: 16px;
+}
+
+.editor-toolbar button[data-command="italic"] {
+  font-size: 16px;
+}
+
+.editor-toolbar button[data-command="underline"] {
+  font-size: 16px;
+}
+
+.editor-toolbar button[data-command="strikeThrough"] {
+  font-size: 16px;
 }
 
 
@@ -1476,6 +1514,7 @@ footer strong {
    ========================================= */
 
 .toolbar-separator {
+  flex: 0 0 1px;
   width: 1px;
   height: 25px;
   margin: 0 4px;
@@ -1484,10 +1523,11 @@ footer strong {
 
 
 /* =========================================
-   CONTENT EDITOR
+   RICH TEXT EDITOR
    ========================================= */
 
 #contentEditor {
+  width: 100%;
   min-height: 500px;
   padding: 24px;
   border: 1px solid #d6d3d1;
@@ -1503,9 +1543,15 @@ footer strong {
     Arial,
     sans-serif;
   font-size: 17px;
+  font-weight: 400;
   line-height: 1.8;
+  text-align: left;
   outline: none;
-  overflow-wrap: anywhere;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  box-sizing: border-box;
 }
 
 #contentEditor:focus {
@@ -1520,7 +1566,7 @@ footer strong {
    ========================================= */
 
 #contentEditor:empty::before {
-  content: "Start writing your post...";
+  content: attr(data-placeholder);
   color: #a8a29e;
   pointer-events: none;
 }
@@ -1532,6 +1578,7 @@ footer strong {
 
 #contentEditor p {
   margin: 0 0 1.25rem;
+  padding: 0;
 }
 
 
@@ -1545,8 +1592,8 @@ footer strong {
 #contentEditor h4,
 #contentEditor h5,
 #contentEditor h6 {
-  margin-top: 1.8rem;
-  margin-bottom: 0.75rem;
+  margin: 1.8rem 0 0.75rem;
+  padding: 0;
   color: #1c1917;
   font-weight: 700;
   line-height: 1.25;
@@ -1578,6 +1625,30 @@ footer strong {
 
 
 /* =========================================
+   BOLD / ITALIC / UNDERLINE / STRIKE
+   ========================================= */
+
+#contentEditor strong,
+#contentEditor b {
+  font-weight: 700;
+}
+
+#contentEditor em,
+#contentEditor i {
+  font-style: italic;
+}
+
+#contentEditor u {
+  text-decoration: underline;
+}
+
+#contentEditor s,
+#contentEditor strike {
+  text-decoration: line-through;
+}
+
+
+/* =========================================
    LISTS
    ========================================= */
 
@@ -1587,7 +1658,20 @@ footer strong {
   padding-left: 2rem;
 }
 
+#contentEditor ul {
+  list-style-type: disc;
+}
+
+#contentEditor ol {
+  list-style-type: decimal;
+}
+
 #contentEditor li {
+  margin: 0 0 0.4rem;
+  padding: 0;
+}
+
+#contentEditor li p {
   margin-bottom: 0.4rem;
 }
 
@@ -1604,6 +1688,11 @@ footer strong {
   color: #57534e;
   font-size: 1.05rem;
   font-style: italic;
+  line-height: 1.7;
+}
+
+#contentEditor blockquote p {
+  margin: 0;
 }
 
 
@@ -1616,6 +1705,11 @@ footer strong {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+#contentEditor a:hover {
+  color: #92400e;
 }
 
 
@@ -1629,11 +1723,13 @@ footer strong {
   width: auto;
   height: auto;
   margin: 1.5rem auto;
+  border: 0;
   border-radius: 6px;
+  box-sizing: border-box;
 }
 
-#contentEditor p:has(img) {
-  margin-bottom: 1.5rem;
+#contentEditor img:first-child {
+  margin-top: 0;
 }
 
 
@@ -1642,6 +1738,7 @@ footer strong {
    ========================================= */
 
 #contentEditor hr {
+  width: 100%;
   margin: 2rem 0;
   border: 0;
   border-top: 1px solid #d6d3d1;
@@ -1649,10 +1746,27 @@ footer strong {
 
 
 /* =========================================
-   TEXT SELECTION
+   TEXT ALIGNMENT
    ========================================= */
 
-#contentEditor::selection {
+#contentEditor [align="left"] {
+  text-align: left;
+}
+
+#contentEditor [align="center"] {
+  text-align: center;
+}
+
+#contentEditor [align="right"] {
+  text-align: right;
+}
+
+
+/* =========================================
+   EDITOR SELECTION
+   ========================================= */
+
+#contentEditor ::selection {
   background: #fef3c7;
 }
 
@@ -1664,10 +1778,12 @@ footer strong {
 .editor-dialog {
   width: min(500px, calc(100% - 32px));
   max-width: 500px;
+  margin: auto;
   padding: 0;
   border: 0;
   border-radius: 10px;
   background: #ffffff;
+  color: #292524;
   box-shadow:
     0 20px 50px rgba(0, 0, 0, 0.2);
 }
@@ -1677,14 +1793,26 @@ footer strong {
 }
 
 .editor-dialog form {
+  margin: 0;
   padding: 24px;
 }
 
 .editor-dialog h2 {
   margin: 0 0 20px;
+  padding: 0;
   color: #1c1917;
   font-size: 1.25rem;
+  font-weight: 700;
   line-height: 1.3;
+}
+
+
+/* =========================================
+   DIALOG FORM
+   ========================================= */
+
+.editor-dialog .form-group {
+  margin-bottom: 16px;
 }
 
 .editor-dialog label {
@@ -1696,9 +1824,10 @@ footer strong {
 }
 
 .editor-dialog input {
+  display: block;
   width: 100%;
   height: 42px;
-  margin-bottom: 16px;
+  margin: 0;
   padding: 0 12px;
   border: 1px solid #d6d3d1;
   border-radius: 6px;
@@ -1706,6 +1835,7 @@ footer strong {
   color: #292524;
   font-family: inherit;
   font-size: 15px;
+  line-height: 42px;
   box-sizing: border-box;
 }
 
@@ -1716,6 +1846,11 @@ footer strong {
     0 0 0 2px rgba(245, 158, 11, 0.1);
 }
 
+.editor-dialog .editor-help {
+  display: block;
+  margin-top: 6px;
+}
+
 
 /* =========================================
    DIALOG BUTTONS
@@ -1724,8 +1859,9 @@ footer strong {
 .editor-dialog-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 20px;
 }
 
 .editor-dialog-actions button {
@@ -1738,21 +1874,26 @@ footer strong {
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
+  line-height: 1;
   cursor: pointer;
 }
 
 .editor-dialog-actions button:hover {
   background: #f5f5f4;
+  border-color: #a8a29e;
 }
 
-.editor-dialog-actions button[type="submit"],
+.editor-dialog-actions button:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 1px;
+}
+
 #insertImageButton {
   border-color: #f59e0b;
   background: #f59e0b;
   color: #ffffff;
 }
 
-.editor-dialog-actions button[type="submit"]:hover,
 #insertImageButton:hover {
   border-color: #d97706;
   background: #d97706;
@@ -1777,8 +1918,9 @@ footer strong {
   }
 
   .editor-toolbar button {
-    width: 36px;
+    min-width: 36px;
     height: 36px;
+    padding: 0 8px;
   }
 
   .toolbar-separator {
@@ -1805,12 +1947,33 @@ footer strong {
     font-size: 1.25rem;
   }
 
+  #contentEditor h4 {
+    font-size: 1.1rem;
+  }
+
+  #contentEditor h5 {
+    font-size: 1rem;
+  }
+
+  #contentEditor h6 {
+    font-size: 0.95rem;
+  }
+
   .editor-dialog {
     width: calc(100% - 24px);
   }
 
   .editor-dialog form {
     padding: 20px;
+  }
+
+  .editor-dialog-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .editor-dialog-actions button {
+    width: 100%;
   }
 
 }
